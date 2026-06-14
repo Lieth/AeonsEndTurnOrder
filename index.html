@@ -88,6 +88,73 @@
       align-content: start;
     }
 
+    .health-panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(44, 40, 35, 0.74);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      width: 190px;
+      align-self: stretch;
+    }
+
+    .health-reset {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      border-radius: 10px;
+    }
+
+    .health-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .health-row {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .health-label {
+      color: #e8dfd3;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.82rem;
+    }
+
+    .health-value {
+      color: #fff;
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      min-width: 2ch;
+      text-align: right;
+    }
+
+    .health-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .health-actions button {
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
     button {
       width: 100%;
       border: 0;
@@ -122,7 +189,7 @@
 
     .controls-layout {
       display: grid;
-      grid-template-columns: auto auto;
+      grid-template-columns: auto auto auto;
       justify-content: center;
       gap: 10px;
       align-items: start;
@@ -479,7 +546,7 @@
       }
 
       .controls-layout {
-        grid-template-columns: auto auto;
+        grid-template-columns: auto auto auto;
         justify-content: center;
       }
 
@@ -522,6 +589,28 @@
             </button>
             <button id="discard-pile-return" class="discard-return" aria-label="Return player card to drawpile" title="Return player card to drawpile">&#8592;</button>
           </div>
+
+          <section class="health-panel">
+            <div class="health-list">
+              <div class="health-row">
+                <div class="health-label">City</div>
+                <div class="health-actions">
+                  <button id="city-decrease" aria-label="Decrease city health">-</button>
+                  <div id="city-health" class="health-value">30</div>
+                  <button id="city-increase" aria-label="Increase city health">+</button>
+                </div>
+              </div>
+              <div class="health-row">
+                <div class="health-label">Nemesis</div>
+                <div class="health-actions">
+                  <button id="nemesis-decrease" aria-label="Decrease nemesis health">-</button>
+                  <div id="nemesis-health" class="health-value">70</div>
+                  <button id="nemesis-increase" aria-label="Increase nemesis health">+</button>
+                </div>
+              </div>
+            </div>
+            <button id="health-reset" class="secondary health-reset" aria-label="Reset health values">Reset Health</button>
+          </section>
         </div>
       </aside>
     </section>
@@ -561,7 +650,9 @@
       currentCard: null,
       pendingAction: null,
       discardPile: [],
-      discardViewOpen: false
+      discardViewOpen: false,
+      cityHealth: 30,
+      nemesisHealth: 70
     };
 
     const currentCardEl = document.getElementById("current-card");
@@ -580,6 +671,13 @@
     const drawPileRevealButton = document.getElementById("draw-pile-reveal");
     const drawPileRevealTwoButton = document.getElementById("draw-pile-reveal-two");
     const drawPileCountEl = document.getElementById("draw-pile-count");
+    const cityHealthEl = document.getElementById("city-health");
+    const nemesisHealthEl = document.getElementById("nemesis-health");
+    const cityDecreaseButton = document.getElementById("city-decrease");
+    const cityIncreaseButton = document.getElementById("city-increase");
+    const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
+    const nemesisIncreaseButton = document.getElementById("nemesis-increase");
+    const healthResetButton = document.getElementById("health-reset");
 
     function shuffle(cards) {
       const nextCards = [...cards];
@@ -864,6 +962,8 @@
       }
       drawPileCountEl.textContent = String(state.drawPile.length);
       discardPileCountEl.textContent = `${state.discardPile.length} card${state.discardPile.length === 1 ? "" : "s"}`;
+      cityHealthEl.textContent = String(state.cityHealth);
+      nemesisHealthEl.textContent = String(state.nemesisHealth);
       discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
       const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
       const isLocked = Boolean(state.pendingAction) || state.discardViewOpen;
@@ -964,6 +1064,27 @@
         closeDiscardModal();
         render();
       }
+    });
+    cityDecreaseButton.addEventListener("click", () => {
+      state.cityHealth = Math.max(0, state.cityHealth - 1);
+      render();
+    });
+    cityIncreaseButton.addEventListener("click", () => {
+      state.cityHealth += 1;
+      render();
+    });
+    nemesisDecreaseButton.addEventListener("click", () => {
+      state.nemesisHealth = Math.max(0, state.nemesisHealth - 1);
+      render();
+    });
+    nemesisIncreaseButton.addEventListener("click", () => {
+      state.nemesisHealth += 1;
+      render();
+    });
+    healthResetButton.addEventListener("click", () => {
+      state.cityHealth = 30;
+      state.nemesisHealth = 70;
+      render();
     });
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") {
