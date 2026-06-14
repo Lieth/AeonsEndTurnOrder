@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Draw Pile</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4efe6;
+      --panel: rgba(255, 251, 245, 0.92);
+      --ink: #1d1a16;
+      --accent: #b44f2b;
+      --accent-strong: #8e3718;
+      --muted: #6c6259;
+      --line: rgba(29, 26, 22, 0.14);
+      --shadow: 0 20px 45px rgba(80, 46, 28, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(88, 78, 64, 0.35), transparent 42%),
+        linear-gradient(160deg, #2a2824 0%, #36322c 46%, #2e2b25 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: fit-content;
+      max-width: 100%;
+      min-width: 390px;
+      background: rgba(38, 35, 31, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero {
+      padding: 22px 16px 14px;
+      background:
+        linear-gradient(135deg, rgba(180, 79, 43, 0.24), transparent 55%),
+        linear-gradient(180deg, rgba(70, 64, 56, 0.85), rgba(44, 40, 35, 0.85));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.38);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 14px;
+    }
+
+    .controls {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(44, 40, 35, 0.74);
+    }
+
+    .controls {
+      padding: 12px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    button:hover:enabled {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(142, 55, 24, 0.12);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      box-shadow: none;
+    }
+
+    .primary {
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      color: #fff;
+    }
+
+    .secondary {
+      background: rgba(29, 26, 22, 0.08);
+      color: var(--ink);
+    }
+
+    .controls-layout {
+      display: grid;
+      grid-template-columns: auto auto;
+      justify-content: center;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .drawpile-wrap {
+      position: relative;
+      display: grid;
+    }
+
+    .discard-wrap {
+      position: relative;
+      display: grid;
+    }
+
+    .discarddeck {
+      position: relative;
+      width: clamp(160px, 28vw, 320px);
+      aspect-ratio: 8 / 11;
+      border: 1px solid rgba(29, 26, 22, 0.18);
+      border-radius: 18px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(240, 228, 214, 0.94)),
+        linear-gradient(180deg, rgba(180, 79, 43, 0.15), transparent);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.24), 0 14px 24px rgba(51, 27, 17, 0.14);
+      color: var(--ink);
+      font: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+      overflow: hidden;
+    }
+
+    .discarddeck:hover:enabled {
+      transform: translateY(-2px);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.24), 0 18px 26px rgba(51, 27, 17, 0.2);
+    }
+
+    .discarddeck:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      filter: grayscale(0.25);
+    }
+
+    .discarddeck-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      font-size: 0.85rem;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+    }
+
+    .discarddeck.is-empty .discarddeck-label,
+    .discarddeck.is-empty .discarddeck-card-label,
+    .discarddeck.is-empty .discarddeck-count {
+      color: #1d1a16;
+      text-shadow: none;
+    }
+
+    .discarddeck-card {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      box-shadow: none;
+      border: 0;
+      object-fit: cover;
+      aspect-ratio: auto;
+    }
+
+    .discarddeck-card-label {
+      z-index: 2;
+      font-size: 1.2rem;
+      text-align: center;
+      line-height: 1.2;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+      padding: 0 8px;
+    }
+
+    .discarddeck-count {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      z-index: 2;
+      font-size: 0.85rem;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+    }
+
+    .drawpile {
+      position: relative;
+      width: clamp(160px, 28vw, 320px);
+      aspect-ratio: 8 / 11;
+      border: 1px solid rgba(29, 26, 22, 0.18);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.22), transparent 38%),
+        linear-gradient(150deg, #7f2f17, #532313 48%, #3b1b11);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14), 0 14px 24px rgba(51, 27, 17, 0.22);
+      color: #fff;
+      font: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 18px 14px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+    }
+
+    .drawpile::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 2px solid rgba(255, 244, 233, 0.42);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .drawpile:hover:enabled {
+      transform: translateY(-2px);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14), 0 18px 26px rgba(51, 27, 17, 0.28);
+    }
+
+    .drawpile:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      filter: grayscale(0.25);
+    }
+
+    .drawpile-label {
+      font-size: 0.9rem;
+    }
+
+    .drawpile-count {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .drawpile-eye {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
+    .drawpile-reveal {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
+    .drawpile-star {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
+    .discard-return {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(29, 26, 22, 0.45);
+      background: #ffffff;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
+    .drawpile-eye:hover:enabled {
+      transform: none;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .drawpile-reveal:hover:enabled {
+      transform: none;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .drawpile-star:hover:enabled,
+    .discard-return:hover:enabled {
+      transform: none;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .decision-cards {
+      display: grid;
+      gap: 12px;
+    }
+
+    .decision-card {
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .decision-card strong {
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .decision-card-media {
+      width: min(160px, 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(29, 26, 22, 0.18);
+      box-shadow: 0 8px 16px rgba(51, 27, 17, 0.12);
+      object-fit: cover;
+      aspect-ratio: 3 / 4;
+    }
+
+    .decision-card-media-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .discard-modal-card {
+      width: min(160px, 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(29, 26, 22, 0.18);
+      box-shadow: 0 8px 16px rgba(51, 27, 17, 0.12);
+      object-fit: cover;
+      aspect-ratio: 3 / 4;
+    }
+
+    .inline-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .inline-actions button {
+      width: auto;
+      min-width: 140px;
+    }
+
+    .discard-item {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(180, 79, 43, 0.08);
+      color: var(--ink);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(29, 26, 22, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      width: min(720px, 100%);
+      max-height: min(84vh, 700px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 251, 245, 0.98);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .modal-copy {
+      margin: 8px 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    @media (max-width: 820px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .controls-layout {
+        grid-template-columns: auto auto;
+        justify-content: center;
+      }
+
+      .hero,
+      .layout {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      body {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <h1>Card Draw Pile</h1>
+    </section>
+
+    <section class="layout">
+      <aside class="controls">
+        <div class="controls-layout">
+          <div class="drawpile-wrap">
+            <button id="draw-pile" class="drawpile" aria-label="Draw next card">
+              <span class="drawpile-label">Draw Pile</span>
+              <span id="draw-pile-count" class="drawpile-count">6</span>
+            </button>
+            <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
+            <button id="draw-pile-peek" class="drawpile-eye" aria-label="Peek top card" title="Peek top card">&#128065;</button>
+            <button id="draw-pile-reveal-two" class="drawpile-star" aria-label="Reveal next two cards" title="Reveal next two cards">&#9733;</button>
+          </div>
+          <div class="discard-wrap">
+            <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
+              <span class="discarddeck-label">Discard Pile</span>
+              <img id="current-card-image" class="discarddeck-card" src="" alt="Active discard card" hidden>
+              <span id="current-card" class="discarddeck-card-label">Ready</span>
+              <span id="discard-pile-count" class="discarddeck-count">0 cards</span>
+            </button>
+            <button id="discard-pile-return" class="discard-return" aria-label="Return player card to drawpile" title="Return player card to drawpile">&#8592;</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="action-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <section class="modal">
+      <h2 id="modal-title">Action Required</h2>
+      <p id="modal-copy" class="modal-copy">Resolve the action to continue.</p>
+      <div id="modal-cards" class="decision-cards"></div>
+    </section>
+  </div>
+
+  <div id="discard-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="discard-modal-title">
+    <section class="modal">
+      <h2 id="discard-modal-title">Discard Pile</h2>
+      <p class="modal-copy">Newest card appears first.</p>
+      <div id="discard-modal-cards" class="decision-cards"></div>
+      <div class="inline-actions" style="margin-top: 16px;">
+        <button id="discard-modal-close" class="secondary">Close</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const baseCards = [
+      "Player 1",
+      "Player 2",
+      "Player 3",
+      "Player 4",
+      "Nemesis",
+      "Nemesis"
+    ];
+
+    const state = {
+      drawPile: [],
+      currentCard: null,
+      pendingAction: null,
+      discardPile: [],
+      discardViewOpen: false
+    };
+
+    const currentCardEl = document.getElementById("current-card");
+    const currentCardImageEl = document.getElementById("current-card-image");
+    const modalEl = document.getElementById("action-modal");
+    const modalCopyEl = document.getElementById("modal-copy");
+    const modalCardsEl = document.getElementById("modal-cards");
+    const discardModalEl = document.getElementById("discard-modal");
+    const discardModalCardsEl = document.getElementById("discard-modal-cards");
+    const discardModalCloseButton = document.getElementById("discard-modal-close");
+    const discardPileButton = document.getElementById("discard-pile-button");
+    const discardPileReturnButton = document.getElementById("discard-pile-return");
+    const discardPileCountEl = document.getElementById("discard-pile-count");
+    const drawPileButton = document.getElementById("draw-pile");
+    const drawPilePeekButton = document.getElementById("draw-pile-peek");
+    const drawPileRevealButton = document.getElementById("draw-pile-reveal");
+    const drawPileRevealTwoButton = document.getElementById("draw-pile-reveal-two");
+    const drawPileCountEl = document.getElementById("draw-pile-count");
+
+    function shuffle(cards) {
+      const nextCards = [...cards];
+
+      for (let index = nextCards.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [nextCards[index], nextCards[swapIndex]] = [nextCards[swapIndex], nextCards[index]];
+      }
+
+      return nextCards;
+    }
+
+    function getCardImagePath(card) {
+      return `resources/${encodeURIComponent(card)}.png`;
+    }
+
+    function reshuffleFreshPile() {
+      state.drawPile = shuffle(baseCards);
+      state.discardPile = [];
+    }
+
+    function refillIfNeeded() {
+      if (state.drawPile.length === 0) {
+        reshuffleFreshPile();
+      }
+    }
+
+    function ensureCardsAvailable(count) {
+      if (state.drawPile.length === 0 && count > 0) {
+        reshuffleFreshPile();
+      }
+    }
+
+    function resetPendingAction() {
+      state.pendingAction = null;
+    }
+
+    function closeDiscardModal() {
+      state.discardViewOpen = false;
+    }
+
+    function canClosePendingActionWithEscape() {
+      if (!state.pendingAction) {
+        return false;
+      }
+
+      if (state.pendingAction.type === "peekTop") {
+        return true;
+      }
+
+      if (state.pendingAction.type === "returnPlayer") {
+        return state.pendingAction.options.length <= 1;
+      }
+
+      return false;
+    }
+
+    function isPlayerCard(card) {
+      return typeof card === "string" && card.startsWith("Player");
+    }
+
+    function getReturnablePlayerCards() {
+      const options = state.discardPile.reduce((cards, card, index) => {
+        if (isPlayerCard(card)) {
+          cards.push({
+            key: `discard-${index}`,
+            source: "discard",
+            index,
+            card
+          });
+        }
+
+        return cards;
+      }, []);
+
+      return options;
+    }
+
+    function returnSelectedCardToDrawPile(option) {
+      state.discardPile.splice(option.index, 1);
+
+      state.drawPile.push(option.card);
+      state.drawPile = shuffle(state.drawPile);
+
+      if (option.index === 0) {
+        state.currentCard = state.discardPile[0] ?? null;
+      }
+
+      resetPendingAction();
+      render();
+    }
+
+    function renderActionModal() {
+      modalCardsEl.innerHTML = "";
+
+      if (!state.pendingAction) {
+        modalEl.classList.remove("active");
+        return;
+      }
+
+      modalEl.classList.add("active");
+
+      if (state.pendingAction.type === "peekOne") {
+        modalCopyEl.textContent = "Choose whether the shown card should stay on top or be placed at the bottom of the draw pile.";
+
+        const cardRow = document.createElement("div");
+        cardRow.className = "decision-card";
+        cardRow.innerHTML = `
+          <img class="decision-card-media" src="${getCardImagePath(state.pendingAction.card)}" alt="${state.pendingAction.card}">
+          <div class="inline-actions">
+            <button class="primary" data-action="topdeck">Topdeck</button>
+            <button class="secondary" data-action="bottomdeck">Place At Bottom</button>
+          </div>
+        `;
+
+        cardRow.querySelector('[data-action="topdeck"]').addEventListener("click", () => {
+          state.drawPile.unshift(state.pendingAction.card);
+          resetPendingAction();
+          render();
+        });
+
+        cardRow.querySelector('[data-action="bottomdeck"]').addEventListener("click", () => {
+          state.drawPile.push(state.pendingAction.card);
+          resetPendingAction();
+          render();
+        });
+
+        modalCardsEl.appendChild(cardRow);
+        return;
+      }
+
+      if (state.pendingAction.type === "peekTop") {
+        modalCopyEl.textContent = "This is the current top card. Close the peek to leave it on top of the draw pile.";
+
+        const cardRow = document.createElement("div");
+        cardRow.className = "decision-card";
+        cardRow.innerHTML = `
+          <img class="decision-card-media" src="${getCardImagePath(state.pendingAction.card)}" alt="${state.pendingAction.card}">
+          <div class="inline-actions">
+            <button class="primary" data-action="close-peek">Keep On Top</button>
+          </div>
+        `;
+
+        cardRow.querySelector('[data-action="close-peek"]').addEventListener("click", () => {
+          resetPendingAction();
+          render();
+        });
+
+        modalCardsEl.appendChild(cardRow);
+        return;
+      }
+
+      if (state.pendingAction.type === "peekTwo") {
+        const [firstCard, secondCard] = state.pendingAction.cards;
+
+        if (!secondCard) {
+          modalCopyEl.textContent = "Only one card was available. Choose whether it returns to the top or bottom of the draw pile.";
+
+          const singleRow = document.createElement("div");
+          singleRow.className = "decision-card";
+          singleRow.innerHTML = `
+            <img class="decision-card-media" src="${getCardImagePath(firstCard)}" alt="${firstCard}">
+            <div class="inline-actions">
+              <button class="primary" data-order="single-top">Return On Top</button>
+              <button class="secondary" data-order="single-bottom">Return At Bottom</button>
+            </div>
+          `;
+
+          singleRow.querySelector('[data-order="single-top"]').addEventListener("click", () => {
+            state.drawPile.unshift(firstCard);
+            resetPendingAction();
+            render();
+          });
+
+          singleRow.querySelector('[data-order="single-bottom"]').addEventListener("click", () => {
+            state.drawPile.push(firstCard);
+            resetPendingAction();
+            render();
+          });
+
+          modalCardsEl.appendChild(singleRow);
+          return;
+        }
+
+        modalCopyEl.textContent = "Choose which of the two revealed cards should be on top after they are returned to the draw pile.";
+
+        const firstRow = document.createElement("div");
+        firstRow.className = "decision-card";
+        firstRow.innerHTML = `
+          <div class="decision-card-media-row">
+            <img class="decision-card-media" src="${getCardImagePath(firstCard)}" alt="${firstCard}">
+            <img class="decision-card-media" src="${getCardImagePath(secondCard)}" alt="${secondCard}">
+          </div>
+        `;
+
+        const secondRow = document.createElement("div");
+        secondRow.className = "decision-card";
+        secondRow.innerHTML = `
+          <div class="inline-actions">
+            <button class="primary" data-order="same">Keep Shown Order</button>
+            <button class="secondary" data-order="swap">Swap Order</button>
+          </div>
+        `;
+
+        secondRow.querySelector('[data-order="same"]').addEventListener("click", () => {
+          state.drawPile.unshift(secondCard);
+          state.drawPile.unshift(firstCard);
+          resetPendingAction();
+          render();
+        });
+
+        secondRow.querySelector('[data-order="swap"]').addEventListener("click", () => {
+          state.drawPile.unshift(firstCard);
+          state.drawPile.unshift(secondCard);
+          resetPendingAction();
+          render();
+        });
+
+        modalCardsEl.appendChild(firstRow);
+        modalCardsEl.appendChild(secondRow);
+        return;
+      }
+
+      if (state.pendingAction.type === "returnPlayer") {
+        modalCopyEl.textContent = "Choose a player card from discard to move back into the draw pile and reshuffle.";
+
+        state.pendingAction.options.forEach((option) => {
+          const row = document.createElement("div");
+          row.className = "decision-card";
+          row.innerHTML = `
+            <img class="decision-card-media" src="${getCardImagePath(option.card)}" alt="${option.card}">
+            <div class="inline-actions">
+              <button class="primary" data-action="return-player">Return From Discard</button>
+            </div>
+          `;
+
+          row.querySelector('[data-action="return-player"]').addEventListener("click", () => {
+            returnSelectedCardToDrawPile(option);
+          });
+
+          modalCardsEl.appendChild(row);
+        });
+      }
+    }
+
+    function renderDiscardModal() {
+      discardModalCardsEl.innerHTML = "";
+
+      if (!state.discardViewOpen) {
+        discardModalEl.classList.remove("active");
+        return;
+      }
+
+      discardModalEl.classList.add("active");
+
+      if (state.discardPile.length === 0) {
+        discardModalCardsEl.innerHTML = '<div class="empty-state">Discard pile is empty.</div>';
+        return;
+      }
+
+      state.discardPile.forEach((card) => {
+        const row = document.createElement("div");
+        row.className = "decision-card";
+        row.innerHTML = `
+          <img class="discard-modal-card" src="${getCardImagePath(card)}" alt="${card}">
+        `;
+        discardModalCardsEl.appendChild(row);
+      });
+    }
+
+    function render() {
+      if (state.currentCard) {
+        currentCardImageEl.src = getCardImagePath(state.currentCard);
+        currentCardImageEl.alt = state.currentCard;
+        currentCardImageEl.hidden = false;
+        currentCardEl.hidden = true;
+      } else {
+        currentCardImageEl.src = "";
+        currentCardImageEl.hidden = true;
+        currentCardEl.hidden = false;
+        currentCardEl.textContent = "Ready";
+      }
+      drawPileCountEl.textContent = String(state.drawPile.length);
+      discardPileCountEl.textContent = `${state.discardPile.length} card${state.discardPile.length === 1 ? "" : "s"}`;
+      discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
+      const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
+      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen;
+
+      drawPileButton.disabled = isLocked;
+      drawPilePeekButton.disabled = isLocked;
+      drawPileRevealButton.disabled = isLocked;
+      drawPileRevealTwoButton.disabled = isLocked;
+      discardPileButton.disabled = Boolean(state.pendingAction);
+      discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
+
+      renderActionModal();
+      renderDiscardModal();
+    }
+
+    function drawNextCard() {
+      refillIfNeeded();
+      const nextCard = state.drawPile.shift();
+
+      state.discardPile.unshift(nextCard);
+
+      state.currentCard = nextCard;
+      render();
+    }
+
+    function peekTopCard() {
+      ensureCardsAvailable(1);
+      state.pendingAction = {
+        type: "peekTop",
+        card: state.drawPile[0]
+      };
+      render();
+    }
+
+    function revealNextCard() {
+      ensureCardsAvailable(1);
+      const nextCard = state.drawPile.shift();
+      state.pendingAction = {
+        type: "peekOne",
+        card: nextCard
+      };
+      render();
+    }
+
+    function revealNextTwoCards() {
+      ensureCardsAvailable(2);
+      const firstCard = state.drawPile.shift();
+      const secondCard = state.drawPile.length > 0 ? state.drawPile.shift() : null;
+      const revealed = secondCard ? [firstCard, secondCard] : [firstCard];
+
+      state.pendingAction = {
+        type: "peekTwo",
+        cards: revealed
+      };
+      render();
+    }
+
+    drawPileButton.addEventListener("click", drawNextCard);
+    drawPilePeekButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      peekTopCard();
+    });
+    drawPileRevealButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      revealNextCard();
+    });
+    drawPileRevealTwoButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      revealNextTwoCards();
+    });
+    discardPileReturnButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      state.pendingAction = {
+        type: "returnPlayer",
+        options: getReturnablePlayerCards()
+      };
+
+      if (state.pendingAction.options.length === 0) {
+        resetPendingAction();
+      }
+
+      render();
+    });
+    discardPileButton.addEventListener("click", () => {
+      if (state.pendingAction) {
+        return;
+      }
+
+      state.discardViewOpen = true;
+      render();
+    });
+    discardModalCloseButton.addEventListener("click", () => {
+      closeDiscardModal();
+      render();
+    });
+    discardModalEl.addEventListener("click", (event) => {
+      if (event.target === discardModalEl) {
+        closeDiscardModal();
+        render();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (state.pendingAction && canClosePendingActionWithEscape()) {
+        resetPendingAction();
+        render();
+        return;
+      }
+
+      if (state.discardViewOpen) {
+        closeDiscardModal();
+        render();
+      }
+    });
+
+    reshuffleFreshPile();
+    render();
+  </script>
+</body>
+</html>
