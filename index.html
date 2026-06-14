@@ -415,6 +415,24 @@
       box-shadow: none;
     }
 
+    .drawpile-flash {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
     .discard-return {
       position: absolute;
       left: 8px;
@@ -446,6 +464,7 @@
     }
 
     .drawpile-star:hover:enabled,
+    .drawpile-flash:hover:enabled,
     .discard-return:hover:enabled {
       transform: none;
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
@@ -540,6 +559,44 @@
       color: var(--ink);
     }
 
+    .reorder-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .reorder-card {
+      cursor: grab;
+      user-select: none;
+      transition: box-shadow 120ms ease, transform 120ms ease;
+    }
+
+    .reorder-card:active {
+      cursor: grabbing;
+    }
+
+    .reorder-card.is-dragging {
+      opacity: 0.6;
+      transform: scale(0.99);
+    }
+
+    .reorder-card.is-drop-target {
+      box-shadow: inset 0 0 0 2px rgba(180, 79, 43, 0.35);
+    }
+
+    .reorder-meta {
+      display: grid;
+      gap: 8px;
+      align-content: center;
+    }
+
+    .reorder-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -624,6 +681,7 @@
             <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
             <button id="draw-pile-peek" class="drawpile-eye" aria-label="Peek top card" title="Peek top card">&#128065;</button>
             <button id="draw-pile-reveal-two" class="drawpile-star" aria-label="Reveal next two cards" title="Reveal next two cards">&#9733;</button>
+            <button id="draw-pile-reorder" class="drawpile-flash" aria-label="Reveal and reorder draw pile" title="Reveal and reorder draw pile">&#9889;</button>
           </div>
           <div class="discard-wrap">
             <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
@@ -715,6 +773,7 @@
     const drawPilePeekButton = document.getElementById("draw-pile-peek");
     const drawPileRevealButton = document.getElementById("draw-pile-reveal");
     const drawPileRevealTwoButton = document.getElementById("draw-pile-reveal-two");
+    const drawPileReorderButton = document.getElementById("draw-pile-reorder");
     const drawPileCountEl = document.getElementById("draw-pile-count");
     const cityHealthEl = document.getElementById("city-health");
     const nemesisHealthEl = document.getElementById("nemesis-health");
@@ -784,6 +843,10 @@
 
       if (state.pendingAction.type === "returnPlayer") {
         return state.pendingAction.options.length <= 1;
+      }
+
+      if (state.pendingAction.type === "drawpileReorder") {
+        return true;
       }
 
       return false;
@@ -974,6 +1037,129 @@
 
           modalCardsEl.appendChild(row);
         });
+
+        return;
+      }
+
+      if (state.pendingAction.type === "drawpileReorder") {
+        modalCopyEl.textContent = "Inspect all cards currently in the draw pile and choose the return order. Drag cards to reorder. First card in the list will be the next card drawn.";
+
+        const cards = state.pendingAction.cards;
+
+        if (cards.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "decision-card";
+          emptyRow.innerHTML = `
+            <div class="empty-state">Draw pile is empty.</div>
+            <div class="inline-actions">
+              <button class="primary" data-action="close-reorder">Close</button>
+            </div>
+          `;
+
+          emptyRow.querySelector('[data-action="close-reorder"]').addEventListener("click", () => {
+            resetPendingAction();
+            render();
+          });
+
+          modalCardsEl.appendChild(emptyRow);
+          return;
+        }
+
+        const listHost = document.createElement("div");
+        listHost.className = "reorder-list";
+        const actionsRow = document.createElement("div");
+        let draggedIndex = null;
+
+        actionsRow.className = "decision-card";
+        actionsRow.innerHTML = `
+          <div>
+            <strong>Return Order</strong>
+            <div class="modal-copy" style="margin: 6px 0 0;">Top card is listed first.</div>
+          </div>
+          <div class="inline-actions">
+            <button class="primary" data-action="apply-reorder">Return In This Order</button>
+            <button class="secondary" data-action="cancel-reorder">Cancel</button>
+          </div>
+        `;
+
+        function renderReorderCards() {
+          listHost.innerHTML = "";
+
+          state.pendingAction.cards.forEach((card, index) => {
+            const cardRow = document.createElement("div");
+            cardRow.className = "decision-card reorder-card";
+            cardRow.draggable = true;
+            cardRow.dataset.index = String(index);
+            cardRow.innerHTML = `
+              ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-meta">
+                <strong>${index + 1}. ${card}</strong>
+                <p class="reorder-hint">Drag to move this card.</p>
+              </div>
+            `;
+
+            cardRow.addEventListener("dragstart", (event) => {
+              draggedIndex = index;
+              cardRow.classList.add("is-dragging");
+
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
+              }
+            });
+
+            cardRow.addEventListener("dragend", () => {
+              draggedIndex = null;
+              cardRow.classList.remove("is-dragging");
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+            });
+
+            cardRow.addEventListener("dragover", (event) => {
+              event.preventDefault();
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+
+              cardRow.classList.add("is-drop-target");
+            });
+
+            cardRow.addEventListener("dragleave", () => {
+              cardRow.classList.remove("is-drop-target");
+            });
+
+            cardRow.addEventListener("drop", (event) => {
+              event.preventDefault();
+              cardRow.classList.remove("is-drop-target");
+
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+
+              const movedCard = state.pendingAction.cards.splice(draggedIndex, 1)[0];
+              state.pendingAction.cards.splice(index, 0, movedCard);
+              renderReorderCards();
+            });
+
+            listHost.appendChild(cardRow);
+          });
+        }
+
+        actionsRow.querySelector('[data-action="apply-reorder"]').addEventListener("click", () => {
+          state.drawPile = [...state.pendingAction.cards];
+          resetPendingAction();
+          render();
+        });
+
+        actionsRow.querySelector('[data-action="cancel-reorder"]').addEventListener("click", () => {
+          resetPendingAction();
+          render();
+        });
+
+        renderReorderCards();
+        modalCardsEl.appendChild(actionsRow);
+        modalCardsEl.appendChild(listHost);
       }
     }
 
@@ -1026,6 +1212,7 @@
       drawPilePeekButton.disabled = isLocked;
       drawPileRevealButton.disabled = isLocked;
       drawPileRevealTwoButton.disabled = isLocked;
+      drawPileReorderButton.disabled = isLocked;
       discardPileButton.disabled = Boolean(state.pendingAction);
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
 
@@ -1075,6 +1262,14 @@
       render();
     }
 
+    function reorderDrawPile() {
+      state.pendingAction = {
+        type: "drawpileReorder",
+        cards: [...state.drawPile]
+      };
+      render();
+    }
+
     drawPileButton.addEventListener("click", drawNextCard);
     drawPilePeekButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -1087,6 +1282,10 @@
     drawPileRevealTwoButton.addEventListener("click", (event) => {
       event.stopPropagation();
       revealNextTwoCards();
+    });
+    drawPileReorderButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      reorderDrawPile();
     });
     discardPileReturnButton.addEventListener("click", (event) => {
       event.stopPropagation();
