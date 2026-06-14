@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Draw Pile</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
+
     :root {
       color-scheme: light;
       --bg: #f4efe6;
@@ -240,12 +242,15 @@
 
     .discarddeck-label {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 2;
       font-size: 0.85rem;
       color: #fff;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+      text-align: center;
+      white-space: nowrap;
     }
 
     .discarddeck.is-empty .discarddeck-label,
@@ -269,12 +274,14 @@
 
     .discarddeck-card-label {
       z-index: 2;
-      font-size: 1.2rem;
+      font-size: 1.55rem;
       text-align: center;
       line-height: 1.2;
-      color: #fff;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+      color: #f8f1df;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
       padding: 0 8px;
+      font-family: "Cinzel", Georgia, "Times New Roman", serif;
+      letter-spacing: 0.06em;
     }
 
     .discarddeck-count {
@@ -331,7 +338,22 @@
     }
 
     .drawpile-label {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
       font-size: 0.9rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .drawpile-center-label {
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      opacity: 0.92;
     }
 
     .drawpile-count {
@@ -462,6 +484,28 @@
       aspect-ratio: 3 / 4;
     }
 
+    .card-media-wrap {
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+    }
+
+    .card-media-title {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #f8f1df;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 1.25rem;
+      text-align: center;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.45), 0 2px 6px rgba(0, 0, 0, 0.28);
+      font-family: "Cinzel", Georgia, "Times New Roman", serif;
+      padding: 8px;
+      pointer-events: none;
+    }
+
     .decision-card-media-row {
       display: flex;
       gap: 12px;
@@ -565,7 +609,7 @@
 <body>
   <main class="app">
     <section class="hero">
-      <h1>Card Draw Pile</h1>
+      <h1>Aeon's End</h1>
     </section>
 
     <section class="layout">
@@ -574,6 +618,7 @@
           <div class="drawpile-wrap">
             <button id="draw-pile" class="drawpile" aria-label="Draw next card">
               <span class="drawpile-label">Draw Pile</span>
+              <span class="drawpile-center-label">Cards Left</span>
               <span id="draw-pile-count" class="drawpile-count">6</span>
             </button>
             <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
@@ -694,6 +739,15 @@
       return `resources/${encodeURIComponent(card)}.png`;
     }
 
+    function getCardMediaMarkup(card, mediaClass) {
+      return `
+        <div class="card-media-wrap">
+          <img class="${mediaClass}" src="${getCardImagePath(card)}" alt="${card}">
+          <span class="card-media-title">${card}</span>
+        </div>
+      `;
+    }
+
     function reshuffleFreshPile() {
       state.drawPile = shuffle(baseCards);
       state.discardPile = [];
@@ -786,7 +840,7 @@
         const cardRow = document.createElement("div");
         cardRow.className = "decision-card";
         cardRow.innerHTML = `
-          <img class="decision-card-media" src="${getCardImagePath(state.pendingAction.card)}" alt="${state.pendingAction.card}">
+          ${getCardMediaMarkup(state.pendingAction.card, "decision-card-media")}
           <div class="inline-actions">
             <button class="primary" data-action="topdeck">Topdeck</button>
             <button class="secondary" data-action="bottomdeck">Place At Bottom</button>
@@ -815,7 +869,7 @@
         const cardRow = document.createElement("div");
         cardRow.className = "decision-card";
         cardRow.innerHTML = `
-          <img class="decision-card-media" src="${getCardImagePath(state.pendingAction.card)}" alt="${state.pendingAction.card}">
+          ${getCardMediaMarkup(state.pendingAction.card, "decision-card-media")}
           <div class="inline-actions">
             <button class="primary" data-action="close-peek">Keep On Top</button>
           </div>
@@ -839,7 +893,7 @@
           const singleRow = document.createElement("div");
           singleRow.className = "decision-card";
           singleRow.innerHTML = `
-            <img class="decision-card-media" src="${getCardImagePath(firstCard)}" alt="${firstCard}">
+            ${getCardMediaMarkup(firstCard, "decision-card-media")}
             <div class="inline-actions">
               <button class="primary" data-order="single-top">Return On Top</button>
               <button class="secondary" data-order="single-bottom">Return At Bottom</button>
@@ -868,8 +922,8 @@
         firstRow.className = "decision-card";
         firstRow.innerHTML = `
           <div class="decision-card-media-row">
-            <img class="decision-card-media" src="${getCardImagePath(firstCard)}" alt="${firstCard}">
-            <img class="decision-card-media" src="${getCardImagePath(secondCard)}" alt="${secondCard}">
+            ${getCardMediaMarkup(firstCard, "decision-card-media")}
+            ${getCardMediaMarkup(secondCard, "decision-card-media")}
           </div>
         `;
 
@@ -908,7 +962,7 @@
           const row = document.createElement("div");
           row.className = "decision-card";
           row.innerHTML = `
-            <img class="decision-card-media" src="${getCardImagePath(option.card)}" alt="${option.card}">
+            ${getCardMediaMarkup(option.card, "decision-card-media")}
             <div class="inline-actions">
               <button class="primary" data-action="return-player">Return From Discard</button>
             </div>
@@ -941,9 +995,7 @@
       state.discardPile.forEach((card) => {
         const row = document.createElement("div");
         row.className = "decision-card";
-        row.innerHTML = `
-          <img class="discard-modal-card" src="${getCardImagePath(card)}" alt="${card}">
-        `;
+        row.innerHTML = getCardMediaMarkup(card, "discard-modal-card");
         discardModalCardsEl.appendChild(row);
       });
     }
@@ -953,12 +1005,14 @@
         currentCardImageEl.src = getCardImagePath(state.currentCard);
         currentCardImageEl.alt = state.currentCard;
         currentCardImageEl.hidden = false;
-        currentCardEl.hidden = true;
-      } else {
-        currentCardImageEl.src = "";
-        currentCardImageEl.hidden = true;
         currentCardEl.hidden = false;
-        currentCardEl.textContent = "Ready";
+        currentCardEl.textContent = state.currentCard;
+      } else {
+        currentCardImageEl.src = getCardImagePath("Discard");
+        currentCardImageEl.alt = "Discard pile empty";
+        currentCardImageEl.hidden = false;
+        currentCardEl.hidden = true;
+        currentCardEl.textContent = "";
       }
       drawPileCountEl.textContent = String(state.drawPile.length);
       discardPileCountEl.textContent = `${state.discardPile.length} card${state.discardPile.length === 1 ? "" : "s"}`;
