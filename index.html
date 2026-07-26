@@ -1190,6 +1190,7 @@
       "Nemesis 1": new Audio("resources/Nemesis%201.mp3"),
       "Nemesis 2": new Audio("resources/Nemesis%202.mp3")
     };
+    const preloadedCardImages = [];
 
     function shuffle(cards) {
       const nextCards = [...cards];
@@ -1200,6 +1201,32 @@
       }
 
       return nextCards;
+    }
+
+    function preloadCardImages() {
+      const imageSources = [
+        "resources/Discard.png",
+        "resources/Player%201.png",
+        "resources/Player%202.png",
+        "resources/Player%203.png",
+        "resources/Player%204.png",
+        "resources/Player%20X.png",
+        "resources/Nemesis%201.png",
+        "resources/Nemesis%202.png"
+      ];
+
+      imageSources.forEach((source) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = source;
+        preloadedCardImages.push(image);
+
+        if (typeof image.decode === "function") {
+          image.decode().catch(() => {
+            // Best-effort preload; the app still works if a decode is skipped.
+          });
+        }
+      });
     }
 
     function getCardImagePath(card) {
@@ -2255,6 +2282,7 @@
       }
     });
 
+    preloadCardImages();
     reshuffleFreshPile();
     render();
   </script>
