@@ -90,6 +90,62 @@
       align-content: start;
     }
 
+    .setup-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      color: #e8dfd3;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.82rem;
+    }
+
+    .pile-column {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      justify-items: start;
+    }
+
+    .setup-row select {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font: inherit;
+      font-size: 0.85rem;
+      min-width: 86px;
+    }
+
+    .setup-row select option {
+      color: #1d1a16;
+    }
+
+    .setup-help {
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: #000;
+      color: #d12416;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      box-shadow: none;
+    }
+
+    .setup-help:hover:enabled {
+      transform: none;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+      background: #121212;
+    }
+
     .health-panel {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -205,6 +261,7 @@
     .discard-wrap {
       position: relative;
       display: grid;
+      margin-top: 36px;
     }
 
     .discarddeck {
@@ -451,6 +508,24 @@
       box-shadow: none;
     }
 
+    .discard-nemesis {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      width: 34px;
+      height: 34px;
+      min-width: 0;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(29, 26, 22, 0.45);
+      background: #ffffff;
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: none;
+    }
+
     .drawpile-eye:hover:enabled {
       transform: none;
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
@@ -465,6 +540,7 @@
 
     .drawpile-star:hover:enabled,
     .drawpile-flash:hover:enabled,
+    .discard-nemesis:hover:enabled,
     .discard-return:hover:enabled {
       transform: none;
       box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
@@ -560,12 +636,19 @@
     }
 
     .reorder-list {
-      display: grid;
+      display: flex;
       gap: 12px;
       margin-top: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
 
     .reorder-card {
+      flex: 0 0 min(170px, 40vw);
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      justify-items: center;
       cursor: grab;
       user-select: none;
       transition: box-shadow 120ms ease, transform 120ms ease;
@@ -588,6 +671,7 @@
       display: grid;
       gap: 8px;
       align-content: center;
+      text-align: center;
     }
 
     .reorder-hint {
@@ -595,6 +679,11 @@
       color: var(--muted);
       font-size: 0.9rem;
       letter-spacing: 0.02em;
+    }
+
+    .reorder-card .card-media-wrap,
+    .reorder-card .decision-card-media {
+      width: 100%;
     }
 
     .modal-backdrop {
@@ -616,9 +705,10 @@
       width: min(720px, 100%);
       max-height: min(84vh, 700px);
       overflow: auto;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(255, 244, 233, 0.14);
       border-radius: 22px;
-      background: rgba(255, 251, 245, 0.98);
+      background:
+        linear-gradient(180deg, rgba(79, 44, 27, 0.98), rgba(56, 32, 20, 0.98));
       box-shadow: var(--shadow);
       padding: 22px;
     }
@@ -628,12 +718,86 @@
       font-size: 1rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+      color: #fff4e9;
+      background: linear-gradient(180deg, rgba(180, 79, 43, 0.42), rgba(123, 56, 28, 0.92));
+      border: 1px solid rgba(255, 244, 233, 0.14);
+      border-radius: 14px;
+      padding: 10px 14px;
     }
 
     .modal-copy {
       margin: 8px 0 18px;
-      color: var(--muted);
+      color: #f0dfcf;
       line-height: 1.5;
+    }
+
+    .modal .decision-card {
+      background: rgba(97, 57, 34, 0.72);
+      border-color: rgba(255, 244, 233, 0.16);
+      color: #fff4e9;
+    }
+
+    .modal .primary {
+      background: linear-gradient(180deg, rgba(180, 79, 43, 0.96), rgba(123, 56, 28, 0.98));
+      color: #fff4e9;
+      border: 1px solid rgba(255, 244, 233, 0.14);
+    }
+
+    .modal .secondary {
+      background: rgba(255, 244, 233, 0.14);
+      color: #fff4e9;
+      border: 1px solid rgba(255, 244, 233, 0.14);
+    }
+
+    .modal .inline-actions button:hover:enabled {
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      background: rgba(255, 244, 233, 0.22);
+    }
+
+    .modal .decision-card strong,
+    .modal .reorder-meta,
+    .modal .reorder-hint {
+      color: #fff4e9;
+    }
+
+    .modal .inline-actions button {
+      border-width: 1px;
+      border-style: solid;
+      box-shadow: none;
+    }
+
+    .modal .empty-state {
+      color: #f0dfcf;
+    }
+
+    .help-copy {
+      margin: 8px 0 18px;
+      color: #f0dfcf;
+      line-height: 1.5;
+    }
+
+    .help-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .help-list li {
+      color: #fff4e9;
+      background: rgba(255, 244, 233, 0.08);
+      border: 1px solid rgba(255, 244, 233, 0.14);
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.45;
+    }
+
+    .help-icon {
+      display: inline-block;
+      min-width: 1.8em;
+      font-weight: 700;
+      color: #ffd8c2;
     }
 
     .empty-state {
@@ -672,16 +836,29 @@
     <section class="layout">
       <aside class="controls">
         <div class="controls-layout">
-          <div class="drawpile-wrap">
-            <button id="draw-pile" class="drawpile" aria-label="Draw next card">
-              <span class="drawpile-label">Draw Pile</span>
-              <span class="drawpile-center-label">Cards Left</span>
-              <span id="draw-pile-count" class="drawpile-count">6</span>
-            </button>
-            <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
-            <button id="draw-pile-peek" class="drawpile-eye" aria-label="Peek top card" title="Peek top card">&#128065;</button>
-            <button id="draw-pile-reveal-two" class="drawpile-star" aria-label="Reveal next two cards" title="Reveal next two cards">&#9733;</button>
-            <button id="draw-pile-reorder" class="drawpile-flash" aria-label="Reveal and reorder draw pile" title="Reveal and reorder draw pile">&#9889;</button>
+          <div class="pile-column">
+            <div class="setup-row">
+              <label for="player-count">Players</label>
+              <select id="player-count" aria-label="Select number of players">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+              </select>
+              <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
+            </div>
+
+            <div class="drawpile-wrap">
+              <button id="draw-pile" class="drawpile" aria-label="Draw next card">
+                <span class="drawpile-label">Draw Pile</span>
+                <span class="drawpile-center-label">Cards Left</span>
+                <span id="draw-pile-count" class="drawpile-count">6</span>
+              </button>
+              <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
+              <button id="draw-pile-peek" class="drawpile-eye" aria-label="Peek top card" title="Peek top card">&#128065;</button>
+              <button id="draw-pile-reveal-two" class="drawpile-star" aria-label="Reveal next two cards" title="Reveal next two cards">&#9733;</button>
+              <button id="draw-pile-reorder" class="drawpile-flash" aria-label="Reveal and reorder draw pile" title="Reveal and reorder draw pile">&#9889;</button>
+            </div>
           </div>
           <div class="discard-wrap">
             <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
@@ -690,6 +867,7 @@
               <span id="current-card" class="discarddeck-card-label">Ready</span>
               <span id="discard-pile-count" class="discarddeck-count">0 cards</span>
             </button>
+            <button id="discard-pile-nemesis" class="discard-nemesis" aria-label="Return all Nemesis cards to draw pile" title="Return all Nemesis cards to draw pile">&#9760;</button>
             <button id="discard-pile-return" class="discard-return" aria-label="Return player card to drawpile" title="Return player card to drawpile">&#8592;</button>
           </div>
 
@@ -738,22 +916,73 @@
     </section>
   </div>
 
+  <div id="help-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <section class="modal">
+      <h2 id="help-modal-title">How To Use</h2>
+      <p class="help-copy">
+        Use this page as a turn order helper for Aeon's End. Pick player count first, then draw and manage cards with the icon actions.
+        Changing player count starts a fresh game by rebuilding the draw pile and emptying discard.
+      </p>
+      <ul class="help-list">
+        <li><span class="help-icon">Players</span> Select 1-4 players and reset to a new game setup for that count.</li>
+        <li><span class="help-icon">?</span> Open this help popup.</li>
+        <li><span class="help-icon">Draw Pile</span> Click on pile to draw next card.</li>
+        <li><span class="help-icon">&#8645;</span> Reveal next card and choose to place it on top or bottom of the drawpile.</li>
+        <li><span class="help-icon">&#128065;</span> Peek top card without moving it.</li>
+        <li><span class="help-icon">&#9733;</span> Reveal next two cards and order them in chosen order.</li>
+        <li><span class="help-icon">&#9889;</span> Reveal entire draw pile and reorder it.</li>
+        <li><span class="help-icon">Discard Pile</span> Click to open discard history (newest at top).</li>
+        <li><span class="help-icon">&#9760;</span> Return all Nemesis cards from discard to draw pile and shuffle.</li>
+        <li><span class="help-icon">&#8592;</span> Return one player card from discard to draw pile and shuffle.</li>
+        <li><span class="help-icon">City / Nemesis +/-</span> Adjust health counters for the city or the nemesis.</li>
+        <li><span class="help-icon">Reset Health</span> Set City to 30 and Nemesis to 70.</li>
+      </ul>
+      <div class="inline-actions" style="margin-top: 16px;">
+        <button id="help-modal-close" class="secondary">Close</button>
+      </div>
+    </section>
+  </div>
+
   <script>
-    const baseCards = [
-      "Player 1",
-      "Player 2",
-      "Player 3",
-      "Player 4",
-      "Nemesis",
-      "Nemesis"
-    ];
+    function getBaseCardsForPlayers(playerCount) {
+      const playerCardsByCount = {
+        1: [
+          "Player 1",
+          "Player 1",
+          "Player 1"
+        ],
+        2: [
+          "Player 1",
+          "Player 1",
+          "Player 2",
+          "Player 2"
+        ],
+        3: [
+          "Player 1",
+          "Player 2",
+          "Player 3",
+          "Player Wild"
+        ],
+        4: [
+          "Player 1",
+          "Player 2",
+          "Player 3",
+          "Player 4"
+        ]
+      };
+
+      const playerCards = playerCardsByCount[playerCount] ?? playerCardsByCount[4];
+      return [...playerCards, "Nemesis 1", "Nemesis 2"];
+    }
 
     const state = {
+      playerCount: 4,
       drawPile: [],
       currentCard: null,
       pendingAction: null,
       discardPile: [],
       discardViewOpen: false,
+      helpViewOpen: false,
       cityHealth: 30,
       nemesisHealth: 70
     };
@@ -766,7 +995,11 @@
     const discardModalEl = document.getElementById("discard-modal");
     const discardModalCardsEl = document.getElementById("discard-modal-cards");
     const discardModalCloseButton = document.getElementById("discard-modal-close");
+    const helpModalEl = document.getElementById("help-modal");
+    const helpModalCloseButton = document.getElementById("help-modal-close");
+    const helpButton = document.getElementById("help-button");
     const discardPileButton = document.getElementById("discard-pile-button");
+    const discardPileNemesisButton = document.getElementById("discard-pile-nemesis");
     const discardPileReturnButton = document.getElementById("discard-pile-return");
     const discardPileCountEl = document.getElementById("discard-pile-count");
     const drawPileButton = document.getElementById("draw-pile");
@@ -775,6 +1008,7 @@
     const drawPileRevealTwoButton = document.getElementById("draw-pile-reveal-two");
     const drawPileReorderButton = document.getElementById("draw-pile-reorder");
     const drawPileCountEl = document.getElementById("draw-pile-count");
+    const playerCountSelect = document.getElementById("player-count");
     const cityHealthEl = document.getElementById("city-health");
     const nemesisHealthEl = document.getElementById("nemesis-health");
     const cityDecreaseButton = document.getElementById("city-decrease");
@@ -795,21 +1029,34 @@
     }
 
     function getCardImagePath(card) {
+      if (card === "Player Wild") {
+        return "resources/Player%20X.png";
+      }
+
       return `resources/${encodeURIComponent(card)}.png`;
+    }
+
+    function getCardDisplayName(card) {
+      if (isNemesisCard(card)) {
+        return "Nemesis";
+      }
+
+      return card;
     }
 
     function getCardMediaMarkup(card, mediaClass) {
       return `
         <div class="card-media-wrap">
           <img class="${mediaClass}" src="${getCardImagePath(card)}" alt="${card}">
-          <span class="card-media-title">${card}</span>
+          <span class="card-media-title">${getCardDisplayName(card)}</span>
         </div>
       `;
     }
 
     function reshuffleFreshPile() {
-      state.drawPile = shuffle(baseCards);
+      state.drawPile = shuffle(getBaseCardsForPlayers(state.playerCount));
       state.discardPile = [];
+      state.currentCard = null;
     }
 
     function refillIfNeeded() {
@@ -832,6 +1079,10 @@
       state.discardViewOpen = false;
     }
 
+    function closeHelpModal() {
+      state.helpViewOpen = false;
+    }
+
     function canClosePendingActionWithEscape() {
       if (!state.pendingAction) {
         return false;
@@ -842,10 +1093,18 @@
       }
 
       if (state.pendingAction.type === "returnPlayer") {
-        return state.pendingAction.options.length <= 1;
+        return true;
       }
 
       if (state.pendingAction.type === "drawpileReorder") {
+        return true;
+      }
+
+      if (state.pendingAction.type === "peekTwo") {
+        return true;
+      }
+
+      if (state.pendingAction.type === "returnNemesisAll") {
         return true;
       }
 
@@ -854,6 +1113,14 @@
 
     function isPlayerCard(card) {
       return typeof card === "string" && card.startsWith("Player");
+    }
+
+    function isNemesisCard(card) {
+      return card === "Nemesis 1" || card === "Nemesis 2";
+    }
+
+    function getReturnableNemesisCount() {
+      return state.discardPile.filter((card) => isNemesisCard(card)).length;
     }
 
     function getReturnablePlayerCards() {
@@ -882,6 +1149,35 @@
       if (option.index === 0) {
         state.currentCard = state.discardPile[0] ?? null;
       }
+
+      resetPendingAction();
+      render();
+    }
+
+    function cancelPeekTwoAction() {
+      if (state.pendingAction && state.pendingAction.type === "peekTwo") {
+        for (let index = state.pendingAction.cards.length - 1; index >= 0; index -= 1) {
+          state.drawPile.unshift(state.pendingAction.cards[index]);
+        }
+      }
+
+      resetPendingAction();
+      render();
+    }
+
+    function returnAllNemesisCardsToDrawPile() {
+      const nemesisCards = state.discardPile.filter((card) => isNemesisCard(card));
+
+      if (nemesisCards.length === 0) {
+        resetPendingAction();
+        render();
+        return;
+      }
+
+      state.discardPile = state.discardPile.filter((card) => !isNemesisCard(card));
+      state.drawPile.push(...nemesisCards);
+      state.drawPile = shuffle(state.drawPile);
+      state.currentCard = state.discardPile[0] ?? null;
 
       resetPendingAction();
       render();
@@ -979,92 +1275,9 @@
           return;
         }
 
-        modalCopyEl.textContent = "Choose which of the two revealed cards should be on top after they are returned to the draw pile.";
+        modalCopyEl.textContent = "Drag to reorder left to right. Leftmost card will be drawn first, rightmost card becomes the bottom of these two.";
 
-        const firstRow = document.createElement("div");
-        firstRow.className = "decision-card";
-        firstRow.innerHTML = `
-          <div class="decision-card-media-row">
-            ${getCardMediaMarkup(firstCard, "decision-card-media")}
-            ${getCardMediaMarkup(secondCard, "decision-card-media")}
-          </div>
-        `;
-
-        const secondRow = document.createElement("div");
-        secondRow.className = "decision-card";
-        secondRow.innerHTML = `
-          <div class="inline-actions">
-            <button class="primary" data-order="same">Keep Shown Order</button>
-            <button class="secondary" data-order="swap">Swap Order</button>
-          </div>
-        `;
-
-        secondRow.querySelector('[data-order="same"]').addEventListener("click", () => {
-          state.drawPile.unshift(secondCard);
-          state.drawPile.unshift(firstCard);
-          resetPendingAction();
-          render();
-        });
-
-        secondRow.querySelector('[data-order="swap"]').addEventListener("click", () => {
-          state.drawPile.unshift(firstCard);
-          state.drawPile.unshift(secondCard);
-          resetPendingAction();
-          render();
-        });
-
-        modalCardsEl.appendChild(firstRow);
-        modalCardsEl.appendChild(secondRow);
-        return;
-      }
-
-      if (state.pendingAction.type === "returnPlayer") {
-        modalCopyEl.textContent = "Choose a player card from discard to move back into the draw pile and reshuffle.";
-
-        state.pendingAction.options.forEach((option) => {
-          const row = document.createElement("div");
-          row.className = "decision-card";
-          row.innerHTML = `
-            ${getCardMediaMarkup(option.card, "decision-card-media")}
-            <div class="inline-actions">
-              <button class="primary" data-action="return-player">Return From Discard</button>
-            </div>
-          `;
-
-          row.querySelector('[data-action="return-player"]').addEventListener("click", () => {
-            returnSelectedCardToDrawPile(option);
-          });
-
-          modalCardsEl.appendChild(row);
-        });
-
-        return;
-      }
-
-      if (state.pendingAction.type === "drawpileReorder") {
-        modalCopyEl.textContent = "Inspect all cards currently in the draw pile and choose the return order. Drag cards to reorder. First card in the list will be the next card drawn.";
-
-        const cards = state.pendingAction.cards;
-
-        if (cards.length === 0) {
-          const emptyRow = document.createElement("div");
-          emptyRow.className = "decision-card";
-          emptyRow.innerHTML = `
-            <div class="empty-state">Draw pile is empty.</div>
-            <div class="inline-actions">
-              <button class="primary" data-action="close-reorder">Close</button>
-            </div>
-          `;
-
-          emptyRow.querySelector('[data-action="close-reorder"]').addEventListener("click", () => {
-            resetPendingAction();
-            render();
-          });
-
-          modalCardsEl.appendChild(emptyRow);
-          return;
-        }
-
+        const orderedCards = [firstCard, secondCard];
         const listHost = document.createElement("div");
         listHost.className = "reorder-list";
         const actionsRow = document.createElement("div");
@@ -1073,28 +1286,27 @@
         actionsRow.className = "decision-card";
         actionsRow.innerHTML = `
           <div>
-            <strong>Return Order</strong>
-            <div class="modal-copy" style="margin: 6px 0 0;">Top card is listed first.</div>
+            <strong>Two Card Order</strong>
+            <div class="modal-copy" style="margin: 6px 0 0;">Left to right: next draw to bottom.</div>
           </div>
           <div class="inline-actions">
-            <button class="primary" data-action="apply-reorder">Return In This Order</button>
-            <button class="secondary" data-action="cancel-reorder">Cancel</button>
+            <button class="primary" data-action="apply-two-reorder">Return In This Order</button>
+            <button class="secondary" data-action="cancel-two-reorder">Cancel</button>
           </div>
         `;
 
-        function renderReorderCards() {
+        function renderPeekTwoReorderCards() {
           listHost.innerHTML = "";
 
-          state.pendingAction.cards.forEach((card, index) => {
+          orderedCards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
             cardRow.draggable = true;
-            cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
               <div class="reorder-meta">
-                <strong>${index + 1}. ${card}</strong>
-                <p class="reorder-hint">Drag to move this card.</p>
+                <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
+                <p class="reorder-hint">Drag left or right.</p>
               </div>
             `;
 
@@ -1137,8 +1349,206 @@
                 return;
               }
 
-              const movedCard = state.pendingAction.cards.splice(draggedIndex, 1)[0];
-              state.pendingAction.cards.splice(index, 0, movedCard);
+              const targetCard = orderedCards[index];
+              orderedCards[index] = orderedCards[draggedIndex];
+              orderedCards[draggedIndex] = targetCard;
+              renderPeekTwoReorderCards();
+            });
+
+            listHost.appendChild(cardRow);
+          });
+        }
+
+        actionsRow.querySelector('[data-action="apply-two-reorder"]').addEventListener("click", () => {
+          for (let index = orderedCards.length - 1; index >= 0; index -= 1) {
+            state.drawPile.unshift(orderedCards[index]);
+          }
+          resetPendingAction();
+          render();
+        });
+
+        actionsRow.querySelector('[data-action="cancel-two-reorder"]').addEventListener("click", () => {
+          cancelPeekTwoAction();
+        });
+
+        renderPeekTwoReorderCards();
+        modalCardsEl.appendChild(actionsRow);
+        modalCardsEl.appendChild(listHost);
+        return;
+      }
+
+      if (state.pendingAction.type === "returnPlayer") {
+        modalCopyEl.textContent = "Choose a player card from discard to move back into the draw pile and reshuffle.";
+
+        const actionsRow = document.createElement("div");
+        actionsRow.className = "decision-card";
+        actionsRow.innerHTML = `
+          <div>
+            <strong>Return Player Card</strong>
+            <div class="modal-copy" style="margin: 6px 0 0;">Pick a player card to return, or cancel to keep discard unchanged.</div>
+          </div>
+          <div class="inline-actions">
+            <button class="secondary" data-action="cancel-return-player">Cancel</button>
+          </div>
+        `;
+
+        actionsRow.querySelector('[data-action="cancel-return-player"]').addEventListener("click", () => {
+          resetPendingAction();
+          render();
+        });
+
+        modalCardsEl.appendChild(actionsRow);
+
+        state.pendingAction.options.forEach((option) => {
+          const row = document.createElement("div");
+          row.className = "decision-card";
+          row.innerHTML = `
+            ${getCardMediaMarkup(option.card, "decision-card-media")}
+            <div class="inline-actions">
+              <button class="primary" data-action="return-player">Return From Discard</button>
+            </div>
+          `;
+
+          row.querySelector('[data-action="return-player"]').addEventListener("click", () => {
+            returnSelectedCardToDrawPile(option);
+          });
+
+          modalCardsEl.appendChild(row);
+        });
+
+        return;
+      }
+
+      if (state.pendingAction.type === "returnNemesisAll") {
+        const count = state.pendingAction.count;
+        const cardLabel = count === 1 ? "card" : "cards";
+        modalCopyEl.textContent = `Return ${count} Nemesis ${cardLabel} from discard to draw pile and shuffle the draw pile?`;
+
+        const confirmationRow = document.createElement("div");
+        confirmationRow.className = "decision-card";
+        confirmationRow.innerHTML = `
+          <div>
+            <strong>${count} Nemesis ${cardLabel}</strong>
+            <div class="modal-copy" style="margin: 6px 0 0;">This action moves all Nemesis cards from discard into draw pile, then shuffles draw pile.</div>
+          </div>
+          <div class="inline-actions">
+            <button class="primary" data-action="confirm-return-nemesis">OK</button>
+            <button class="secondary" data-action="cancel-return-nemesis">Cancel</button>
+          </div>
+        `;
+
+        confirmationRow.querySelector('[data-action="confirm-return-nemesis"]').addEventListener("click", () => {
+          returnAllNemesisCardsToDrawPile();
+        });
+
+        confirmationRow.querySelector('[data-action="cancel-return-nemesis"]').addEventListener("click", () => {
+          resetPendingAction();
+          render();
+        });
+
+        modalCardsEl.appendChild(confirmationRow);
+        return;
+      }
+
+      if (state.pendingAction.type === "drawpileReorder") {
+        modalCopyEl.textContent = "Inspect all cards currently in the draw pile and choose the return order. Drag cards left to right. Leftmost card is drawn first, rightmost card is at the bottom.";
+
+        const cards = state.pendingAction.cards;
+
+        if (cards.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "decision-card";
+          emptyRow.innerHTML = `
+            <div class="empty-state">Draw pile is empty.</div>
+            <div class="inline-actions">
+              <button class="primary" data-action="close-reorder">Close</button>
+            </div>
+          `;
+
+          emptyRow.querySelector('[data-action="close-reorder"]').addEventListener("click", () => {
+            resetPendingAction();
+            render();
+          });
+
+          modalCardsEl.appendChild(emptyRow);
+          return;
+        }
+
+        const listHost = document.createElement("div");
+        listHost.className = "reorder-list";
+        const actionsRow = document.createElement("div");
+        let draggedIndex = null;
+
+        actionsRow.className = "decision-card";
+        actionsRow.innerHTML = `
+          <div>
+            <strong>Return Order</strong>
+            <div class="modal-copy" style="margin: 6px 0 0;">Left to right: next draw to bottom.</div>
+          </div>
+          <div class="inline-actions">
+            <button class="primary" data-action="apply-reorder">Return In This Order</button>
+            <button class="secondary" data-action="cancel-reorder">Cancel</button>
+          </div>
+        `;
+
+        function renderReorderCards() {
+          listHost.innerHTML = "";
+
+          state.pendingAction.cards.forEach((card, index) => {
+            const cardRow = document.createElement("div");
+            cardRow.className = "decision-card reorder-card";
+            cardRow.draggable = true;
+            cardRow.dataset.index = String(index);
+            cardRow.innerHTML = `
+              ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-meta">
+                <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
+                <p class="reorder-hint">Drag left or right.</p>
+              </div>
+            `;
+
+            cardRow.addEventListener("dragstart", (event) => {
+              draggedIndex = index;
+              cardRow.classList.add("is-dragging");
+
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
+              }
+            });
+
+            cardRow.addEventListener("dragend", () => {
+              draggedIndex = null;
+              cardRow.classList.remove("is-dragging");
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+            });
+
+            cardRow.addEventListener("dragover", (event) => {
+              event.preventDefault();
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+
+              cardRow.classList.add("is-drop-target");
+            });
+
+            cardRow.addEventListener("dragleave", () => {
+              cardRow.classList.remove("is-drop-target");
+            });
+
+            cardRow.addEventListener("drop", (event) => {
+              event.preventDefault();
+              cardRow.classList.remove("is-drop-target");
+
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+
+              const targetCard = state.pendingAction.cards[index];
+              state.pendingAction.cards[index] = state.pendingAction.cards[draggedIndex];
+              state.pendingAction.cards[draggedIndex] = targetCard;
               renderReorderCards();
             });
 
@@ -1186,13 +1596,22 @@
       });
     }
 
+    function renderHelpModal() {
+      if (state.helpViewOpen) {
+        helpModalEl.classList.add("active");
+        return;
+      }
+
+      helpModalEl.classList.remove("active");
+    }
+
     function render() {
       if (state.currentCard) {
         currentCardImageEl.src = getCardImagePath(state.currentCard);
-        currentCardImageEl.alt = state.currentCard;
+        currentCardImageEl.alt = getCardDisplayName(state.currentCard);
         currentCardImageEl.hidden = false;
         currentCardEl.hidden = false;
-        currentCardEl.textContent = state.currentCard;
+        currentCardEl.textContent = getCardDisplayName(state.currentCard);
       } else {
         currentCardImageEl.src = getCardImagePath("Discard");
         currentCardImageEl.alt = "Discard pile empty";
@@ -1206,18 +1625,23 @@
       nemesisHealthEl.textContent = String(state.nemesisHealth);
       discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
       const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
-      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen;
+      const returnableNemesisCount = getReturnableNemesisCount();
+      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen;
 
       drawPileButton.disabled = isLocked;
       drawPilePeekButton.disabled = isLocked;
       drawPileRevealButton.disabled = isLocked;
       drawPileRevealTwoButton.disabled = isLocked;
       drawPileReorderButton.disabled = isLocked;
-      discardPileButton.disabled = Boolean(state.pendingAction);
+      discardPileButton.disabled = isLocked;
+      discardPileNemesisButton.disabled = isLocked || returnableNemesisCount === 0;
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
+      playerCountSelect.disabled = isLocked;
+      helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen;
 
       renderActionModal();
       renderDiscardModal();
+      renderHelpModal();
     }
 
     function drawNextCard() {
@@ -1270,6 +1694,15 @@
       render();
     }
 
+    function startNewGameWithPlayerCount(playerCount) {
+      state.playerCount = playerCount;
+      resetPendingAction();
+      closeDiscardModal();
+      closeHelpModal();
+      reshuffleFreshPile();
+      render();
+    }
+
     drawPileButton.addEventListener("click", drawNextCard);
     drawPilePeekButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -1287,6 +1720,25 @@
       event.stopPropagation();
       reorderDrawPile();
     });
+    playerCountSelect.addEventListener("change", (event) => {
+      const nextCount = Number.parseInt(event.target.value, 10);
+
+      if (![1, 2, 3, 4].includes(nextCount)) {
+        return;
+      }
+
+      startNewGameWithPlayerCount(nextCount);
+    });
+    helpButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      if (state.pendingAction || state.discardViewOpen) {
+        return;
+      }
+
+      state.helpViewOpen = true;
+      render();
+    });
     discardPileReturnButton.addEventListener("click", (event) => {
       event.stopPropagation();
       state.pendingAction = {
@@ -1295,6 +1747,19 @@
       };
 
       if (state.pendingAction.options.length === 0) {
+        resetPendingAction();
+      }
+
+      render();
+    });
+    discardPileNemesisButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      state.pendingAction = {
+        type: "returnNemesisAll",
+        count: getReturnableNemesisCount()
+      };
+
+      if (state.pendingAction.count === 0) {
         resetPendingAction();
       }
 
@@ -1315,6 +1780,16 @@
     discardModalEl.addEventListener("click", (event) => {
       if (event.target === discardModalEl) {
         closeDiscardModal();
+        render();
+      }
+    });
+    helpModalCloseButton.addEventListener("click", () => {
+      closeHelpModal();
+      render();
+    });
+    helpModalEl.addEventListener("click", (event) => {
+      if (event.target === helpModalEl) {
+        closeHelpModal();
         render();
       }
     });
@@ -1345,6 +1820,11 @@
       }
 
       if (state.pendingAction && canClosePendingActionWithEscape()) {
+        if (state.pendingAction.type === "peekTwo") {
+          cancelPeekTwoAction();
+          return;
+        }
+
         resetPendingAction();
         render();
         return;
@@ -1352,6 +1832,12 @@
 
       if (state.discardViewOpen) {
         closeDiscardModal();
+        render();
+        return;
+      }
+
+      if (state.helpViewOpen) {
+        closeHelpModal();
         render();
       }
     });

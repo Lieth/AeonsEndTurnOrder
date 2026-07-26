@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.Drawing
 
-$pngPath = Join-Path (Get-Location) "resources\Nemesis.png"
+$pngPath = Join-Path (Get-Location) "resources\Nemesis 1.png"
 $icoPath = Join-Path (Get-Location) "DrawPhaser.ico"
 
 $img = [System.Drawing.Image]::FromFile($pngPath)
