@@ -146,6 +146,16 @@
       background: #121212;
     }
 
+    .setup-sound {
+      color: #e8dfd3;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .setup-sound.is-muted {
+      color: #d12416;
+    }
+
     .health-panel {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -386,6 +396,30 @@
     .drawpile:hover:enabled {
       transform: translateY(-2px);
       box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14), 0 18px 26px rgba(51, 27, 17, 0.28);
+    }
+
+    .drawpile.is-shuffling {
+      animation: drawpile-shuffle 620ms cubic-bezier(0.22, 0.8, 0.29, 1);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.24), 0 0 0 3px rgba(255, 236, 205, 0.22), 0 20px 30px rgba(51, 27, 17, 0.38);
+    }
+
+    .drawpile.is-shuffling::before {
+      animation: drawpile-shuffle-frame 620ms cubic-bezier(0.22, 0.8, 0.29, 1);
+    }
+
+    @keyframes drawpile-shuffle {
+      0% { transform: translateY(0) rotate(0deg) scale(1); }
+      18% { transform: translateY(-2px) rotate(-2.2deg) scale(1.01); }
+      36% { transform: translateY(-1px) rotate(1.9deg) scale(1.015); }
+      54% { transform: translateY(-2px) rotate(-1.4deg) scale(1.01); }
+      72% { transform: translateY(-1px) rotate(1deg) scale(1.005); }
+      100% { transform: translateY(0) rotate(0deg) scale(1); }
+    }
+
+    @keyframes drawpile-shuffle-frame {
+      0% { opacity: 0.78; }
+      50% { opacity: 0.95; }
+      100% { opacity: 0.78; }
     }
 
     .drawpile:disabled {
@@ -845,6 +879,7 @@
                 <option value="3">3</option>
                 <option value="4" selected>4</option>
               </select>
+              <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
               <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
             </div>
 
@@ -925,6 +960,7 @@
       </p>
       <ul class="help-list">
         <li><span class="help-icon">Players</span> Select 1-4 players and reset to a new game setup for that count.</li>
+        <li><span class="help-icon">&#128266;/&#128263;</span> Toggle sounds on/off.</li>
         <li><span class="help-icon">?</span> Open this help popup.</li>
         <li><span class="help-icon">Draw Pile</span> Click on pile to draw next card.</li>
         <li><span class="help-icon">&#8645;</span> Reveal next card and choose to place it on top or bottom of the drawpile.</li>
@@ -983,6 +1019,7 @@
       discardPile: [],
       discardViewOpen: false,
       helpViewOpen: false,
+      soundMuted: false,
       cityHealth: 30,
       nemesisHealth: 70
     };
@@ -997,6 +1034,7 @@
     const discardModalCloseButton = document.getElementById("discard-modal-close");
     const helpModalEl = document.getElementById("help-modal");
     const helpModalCloseButton = document.getElementById("help-modal-close");
+    const soundToggleButton = document.getElementById("sound-toggle");
     const helpButton = document.getElementById("help-button");
     const discardPileButton = document.getElementById("discard-pile-button");
     const discardPileNemesisButton = document.getElementById("discard-pile-nemesis");
@@ -1016,6 +1054,11 @@
     const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
     const nemesisIncreaseButton = document.getElementById("nemesis-increase");
     const healthResetButton = document.getElementById("health-reset");
+    let shuffleAnimationTimeoutId = null;
+    const nemesisSoundByCard = {
+      "Nemesis 1": new Audio("resources/Nemesis%201.mp3"),
+      "Nemesis 2": new Audio("resources/Nemesis%202.mp3")
+    };
 
     function shuffle(cards) {
       const nextCards = [...cards];
@@ -1059,16 +1102,37 @@
       state.currentCard = null;
     }
 
+    function triggerShuffleAnimation() {
+      drawPileButton.classList.remove("is-shuffling");
+      void drawPileButton.offsetWidth;
+      drawPileButton.classList.add("is-shuffling");
+
+      if (shuffleAnimationTimeoutId !== null) {
+        clearTimeout(shuffleAnimationTimeoutId);
+      }
+
+      shuffleAnimationTimeoutId = setTimeout(() => {
+        drawPileButton.classList.remove("is-shuffling");
+        shuffleAnimationTimeoutId = null;
+      }, 700);
+    }
+
     function refillIfNeeded() {
       if (state.drawPile.length === 0) {
         reshuffleFreshPile();
+        return true;
       }
+
+      return false;
     }
 
     function ensureCardsAvailable(count) {
       if (state.drawPile.length === 0 && count > 0) {
         reshuffleFreshPile();
+        return true;
       }
+
+      return false;
     }
 
     function resetPendingAction() {
@@ -1119,6 +1183,47 @@
       return card === "Nemesis 1" || card === "Nemesis 2";
     }
 
+    function updateSoundToggleButton() {
+      soundToggleButton.classList.toggle("is-muted", state.soundMuted);
+      soundToggleButton.innerHTML = state.soundMuted ? "&#128263;" : "&#128266;";
+      soundToggleButton.setAttribute("aria-label", state.soundMuted ? "Unmute sounds" : "Mute sounds");
+      soundToggleButton.setAttribute("title", state.soundMuted ? "Unmute sounds" : "Mute sounds");
+    }
+
+    function playNemesisSound(card, delayMs = 0) {
+      if (state.soundMuted) {
+        return;
+      }
+
+      if (!isNemesisCard(card)) {
+        return;
+      }
+
+      const sourceAudio = nemesisSoundByCard[card];
+      if (!sourceAudio) {
+        return;
+      }
+
+      const playNow = () => {
+        const sound = sourceAudio.cloneNode();
+        sound.currentTime = 0;
+
+        const playPromise = sound.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {
+            // Ignore autoplay/interrupt errors so gameplay is unaffected.
+          });
+        }
+      };
+
+      if (delayMs > 0) {
+        setTimeout(playNow, delayMs);
+        return;
+      }
+
+      playNow();
+    }
+
     function getReturnableNemesisCount() {
       return state.discardPile.filter((card) => isNemesisCard(card)).length;
     }
@@ -1145,6 +1250,7 @@
 
       state.drawPile.push(option.card);
       state.drawPile = shuffle(state.drawPile);
+      triggerShuffleAnimation();
 
       if (option.index === 0) {
         state.currentCard = state.discardPile[0] ?? null;
@@ -1177,6 +1283,7 @@
       state.discardPile = state.discardPile.filter((card) => !isNemesisCard(card));
       state.drawPile.push(...nemesisCards);
       state.drawPile = shuffle(state.drawPile);
+      triggerShuffleAnimation();
       state.currentCard = state.discardPile[0] ?? null;
 
       resetPendingAction();
@@ -1638,6 +1745,7 @@
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
       playerCountSelect.disabled = isLocked;
       helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen;
+      updateSoundToggleButton();
 
       renderActionModal();
       renderDiscardModal();
@@ -1645,8 +1753,16 @@
     }
 
     function drawNextCard() {
-      refillIfNeeded();
+      const didRefill = refillIfNeeded();
+      if (didRefill) {
+        triggerShuffleAnimation();
+      }
+
       const nextCard = state.drawPile.shift();
+
+      if (isNemesisCard(nextCard)) {
+        playNemesisSound(nextCard);
+      }
 
       state.discardPile.unshift(nextCard);
 
@@ -1655,7 +1771,15 @@
     }
 
     function peekTopCard() {
-      ensureCardsAvailable(1);
+      const didRefill = ensureCardsAvailable(1);
+      if (didRefill) {
+        triggerShuffleAnimation();
+      }
+
+      if (isNemesisCard(state.drawPile[0])) {
+        playNemesisSound(state.drawPile[0]);
+      }
+
       state.pendingAction = {
         type: "peekTop",
         card: state.drawPile[0]
@@ -1664,8 +1788,16 @@
     }
 
     function revealNextCard() {
-      ensureCardsAvailable(1);
+      const didRefill = ensureCardsAvailable(1);
+      if (didRefill) {
+        triggerShuffleAnimation();
+      }
+
       const nextCard = state.drawPile.shift();
+      if (isNemesisCard(nextCard)) {
+        playNemesisSound(nextCard);
+      }
+
       state.pendingAction = {
         type: "peekOne",
         card: nextCard
@@ -1674,9 +1806,21 @@
     }
 
     function revealNextTwoCards() {
-      ensureCardsAvailable(2);
+      const didRefill = ensureCardsAvailable(2);
+      if (didRefill) {
+        triggerShuffleAnimation();
+      }
+
       const firstCard = state.drawPile.shift();
       const secondCard = state.drawPile.length > 0 ? state.drawPile.shift() : null;
+
+      if (isNemesisCard(firstCard)) {
+        playNemesisSound(firstCard);
+      }
+      if (isNemesisCard(secondCard)) {
+        playNemesisSound(secondCard, isNemesisCard(firstCard) ? 140 : 0);
+      }
+
       const revealed = secondCard ? [firstCard, secondCard] : [firstCard];
 
       state.pendingAction = {
@@ -1728,6 +1872,11 @@
       }
 
       startNewGameWithPlayerCount(nextCount);
+    });
+    soundToggleButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      state.soundMuted = !state.soundMuted;
+      render();
     });
     helpButton.addEventListener("click", (event) => {
       event.stopPropagation();
