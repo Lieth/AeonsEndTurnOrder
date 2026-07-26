@@ -108,6 +108,13 @@
       justify-items: start;
     }
 
+    .discard-column {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      justify-items: start;
+    }
+
     .setup-row select {
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
@@ -121,6 +128,27 @@
 
     .setup-row select option {
       color: #1d1a16;
+    }
+
+    .player-setup-trigger {
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 10px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font: inherit;
+      font-size: 0.85rem;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      width: auto;
+      min-width: 122px;
+      box-shadow: none;
+    }
+
+    .player-setup-trigger:hover:enabled {
+      transform: none;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .setup-help {
@@ -271,7 +299,21 @@
     .discard-wrap {
       position: relative;
       display: grid;
-      margin-top: 36px;
+      align-content: start;
+      gap: 8px;
+    }
+
+    .round-counter {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff4e9;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 6px 10px;
+      width: 100%;
     }
 
     .discarddeck {
@@ -834,6 +876,67 @@
       color: #ffd8c2;
     }
 
+    .player-setup-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .player-setup-topline {
+      margin-bottom: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .player-setup-topline label {
+      color: #fff4e9;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.78rem;
+    }
+
+    .player-setup-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .player-setup-input {
+      border: 1px solid rgba(255, 244, 233, 0.28);
+      border-radius: 10px;
+      background: rgba(255, 244, 233, 0.1);
+      color: #fff4e9;
+      font: inherit;
+      padding: 8px 10px;
+      width: 100%;
+    }
+
+    .player-setup-input::placeholder {
+      color: rgba(255, 244, 233, 0.68);
+    }
+
+    .player-remove {
+      width: 30px;
+      min-width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 244, 233, 0.28);
+      background: rgba(255, 244, 233, 0.12);
+      color: #fff4e9;
+      font-size: 0.95rem;
+      box-shadow: none;
+    }
+
+    .player-add {
+      width: auto;
+      min-width: 46px;
+      border: 1px solid rgba(255, 244, 233, 0.28);
+      background: rgba(255, 244, 233, 0.16);
+      color: #fff4e9;
+      box-shadow: none;
+    }
+
     .empty-state {
       color: var(--muted);
       font-style: italic;
@@ -872,13 +975,8 @@
         <div class="controls-layout">
           <div class="pile-column">
             <div class="setup-row">
-              <label for="player-count">Players</label>
-              <select id="player-count" aria-label="Select number of players">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4" selected>4</option>
-              </select>
+              <span>Players</span>
+              <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 players</button>
               <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
               <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
             </div>
@@ -895,15 +993,18 @@
               <button id="draw-pile-reorder" class="drawpile-flash" aria-label="Reveal and reorder draw pile" title="Reveal and reorder draw pile">&#9889;</button>
             </div>
           </div>
-          <div class="discard-wrap">
-            <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
-              <span class="discarddeck-label">Discard Pile</span>
-              <img id="current-card-image" class="discarddeck-card" src="" alt="Active discard card" hidden>
-              <span id="current-card" class="discarddeck-card-label">Ready</span>
-              <span id="discard-pile-count" class="discarddeck-count">0 cards</span>
-            </button>
-            <button id="discard-pile-nemesis" class="discard-nemesis" aria-label="Return all Nemesis cards to draw pile" title="Return all Nemesis cards to draw pile">&#9760;</button>
-            <button id="discard-pile-return" class="discard-return" aria-label="Return player card to drawpile" title="Return player card to drawpile">&#8592;</button>
+          <div class="discard-column">
+            <div id="round-counter" class="round-counter">Round 1</div>
+            <div class="discard-wrap">
+              <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
+                <span class="discarddeck-label">Discard Pile</span>
+                <img id="current-card-image" class="discarddeck-card" src="" alt="Active discard card" hidden>
+                <span id="current-card" class="discarddeck-card-label">Ready</span>
+                <span id="discard-pile-count" class="discarddeck-count">0 cards</span>
+              </button>
+              <button id="discard-pile-nemesis" class="discard-nemesis" aria-label="Return all Nemesis cards to draw pile" title="Return all Nemesis cards to draw pile">&#9760;</button>
+              <button id="discard-pile-return" class="discard-return" aria-label="Return player card to drawpile" title="Return player card to drawpile">&#8592;</button>
+            </div>
           </div>
 
           <section class="health-panel">
@@ -917,7 +1018,7 @@
                 </div>
               </div>
               <div class="health-row">
-                <div class="health-label">Nemesis</div>
+                <div id="nemesis-health-label" class="health-label">Nemesis</div>
                 <div class="health-actions">
                   <button id="nemesis-decrease" aria-label="Decrease nemesis health">-</button>
                   <div id="nemesis-health" class="health-value">70</div>
@@ -979,6 +1080,23 @@
     </section>
   </div>
 
+  <div id="player-setup-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="player-setup-title">
+    <section class="modal">
+      <h2 id="player-setup-title">Players</h2>
+      <p class="modal-copy">Add 1-4 players and optionally rename them. Applying changes starts a new game and resets draw/discard.</p>
+      <div class="player-setup-topline">
+        <label for="player-setup-nemesis">Nemesis Name</label>
+        <input id="player-setup-nemesis" class="player-setup-input" type="text" maxlength="60" placeholder="Nemesis" aria-label="Nemesis name">
+      </div>
+      <div id="player-setup-list" class="player-setup-list"></div>
+      <div class="inline-actions" style="margin-top: 16px;">
+        <button id="player-setup-add" class="player-add">+</button>
+        <button id="player-setup-apply" class="primary">Apply</button>
+        <button id="player-setup-cancel" class="secondary">Cancel</button>
+      </div>
+    </section>
+  </div>
+
   <script>
     function getBaseCardsForPlayers(playerCount) {
       const playerCardsByCount = {
@@ -1013,12 +1131,18 @@
 
     const state = {
       playerCount: 4,
+      playerNames: ["Player 1", "Player 2", "Player 3", "Player 4"],
+      nemesisName: "Nemesis",
       drawPile: [],
       currentCard: null,
       pendingAction: null,
       discardPile: [],
       discardViewOpen: false,
       helpViewOpen: false,
+      playerSetupViewOpen: false,
+      playerSetupDraftNames: [],
+      playerSetupDraftNemesisName: "Nemesis",
+      round: 1,
       soundMuted: false,
       cityHealth: 30,
       nemesisHealth: 70
@@ -1034,6 +1158,14 @@
     const discardModalCloseButton = document.getElementById("discard-modal-close");
     const helpModalEl = document.getElementById("help-modal");
     const helpModalCloseButton = document.getElementById("help-modal-close");
+    const playerSetupModalEl = document.getElementById("player-setup-modal");
+    const playerSetupButton = document.getElementById("player-setup-button");
+    const playerSetupListEl = document.getElementById("player-setup-list");
+    const playerSetupNemesisInput = document.getElementById("player-setup-nemesis");
+    const playerSetupAddButton = document.getElementById("player-setup-add");
+    const playerSetupApplyButton = document.getElementById("player-setup-apply");
+    const playerSetupCancelButton = document.getElementById("player-setup-cancel");
+    const roundCounterEl = document.getElementById("round-counter");
     const soundToggleButton = document.getElementById("sound-toggle");
     const helpButton = document.getElementById("help-button");
     const discardPileButton = document.getElementById("discard-pile-button");
@@ -1046,9 +1178,9 @@
     const drawPileRevealTwoButton = document.getElementById("draw-pile-reveal-two");
     const drawPileReorderButton = document.getElementById("draw-pile-reorder");
     const drawPileCountEl = document.getElementById("draw-pile-count");
-    const playerCountSelect = document.getElementById("player-count");
     const cityHealthEl = document.getElementById("city-health");
     const nemesisHealthEl = document.getElementById("nemesis-health");
+    const nemesisHealthLabelEl = document.getElementById("nemesis-health-label");
     const cityDecreaseButton = document.getElementById("city-decrease");
     const cityIncreaseButton = document.getElementById("city-increase");
     const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
@@ -1084,6 +1216,14 @@
         return "Nemesis";
       }
 
+      const playerCardMatch = /^Player ([1-4])$/.exec(card);
+      if (playerCardMatch) {
+        const playerIndex = Number.parseInt(playerCardMatch[1], 10) - 1;
+        if (playerIndex >= 0 && playerIndex < state.playerNames.length) {
+          return state.playerNames[playerIndex];
+        }
+      }
+
       return card;
     }
 
@@ -1096,7 +1236,11 @@
       `;
     }
 
-    function reshuffleFreshPile() {
+    function reshuffleFreshPile(advanceRound = false) {
+      if (advanceRound) {
+        state.round += 1;
+      }
+
       state.drawPile = shuffle(getBaseCardsForPlayers(state.playerCount));
       state.discardPile = [];
       state.currentCard = null;
@@ -1119,7 +1263,7 @@
 
     function refillIfNeeded() {
       if (state.drawPile.length === 0) {
-        reshuffleFreshPile();
+        reshuffleFreshPile(true);
         return true;
       }
 
@@ -1128,7 +1272,7 @@
 
     function ensureCardsAvailable(count) {
       if (state.drawPile.length === 0 && count > 0) {
-        reshuffleFreshPile();
+        reshuffleFreshPile(true);
         return true;
       }
 
@@ -1145,6 +1289,12 @@
 
     function closeHelpModal() {
       state.helpViewOpen = false;
+    }
+
+    function closePlayerSetupModal() {
+      state.playerSetupViewOpen = false;
+      state.playerSetupDraftNames = [];
+      state.playerSetupDraftNemesisName = state.nemesisName;
     }
 
     function canClosePendingActionWithEscape() {
@@ -1181,6 +1331,84 @@
 
     function isNemesisCard(card) {
       return card === "Nemesis 1" || card === "Nemesis 2";
+    }
+
+    function getDefaultPlayerName(index) {
+      return `Player ${index + 1}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getSanitizedPlayerNames(names) {
+      const limited = names.slice(0, 4);
+
+      return limited.map((name, index) => {
+        const trimmed = String(name ?? "").trim();
+        return trimmed.length > 0 ? trimmed : getDefaultPlayerName(index);
+      });
+    }
+
+    function getSanitizedNemesisName(name) {
+      const trimmed = String(name ?? "").trim();
+      return trimmed.length > 0 ? trimmed : "Nemesis";
+    }
+
+    function openPlayerSetupModal() {
+      state.playerSetupDraftNames = [...state.playerNames];
+      state.playerSetupDraftNemesisName = state.nemesisName;
+      state.playerSetupViewOpen = true;
+      render();
+    }
+
+    function renderPlayerSetupModal() {
+      playerSetupListEl.innerHTML = "";
+
+      if (!state.playerSetupViewOpen) {
+        playerSetupModalEl.classList.remove("active");
+        return;
+      }
+
+      playerSetupModalEl.classList.add("active");
+      playerSetupNemesisInput.value = state.playerSetupDraftNemesisName;
+      playerSetupNemesisInput.oninput = (event) => {
+        state.playerSetupDraftNemesisName = event.target.value;
+      };
+
+      state.playerSetupDraftNames.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.className = "player-setup-row";
+        row.innerHTML = `
+          <input class="player-setup-input" data-index="${index}" type="text" maxlength="40" value="${escapeHtml(name)}" placeholder="${escapeHtml(getDefaultPlayerName(index))}" aria-label="Player ${index + 1} name">
+          <button class="player-remove" data-index="${index}" aria-label="Remove player ${index + 1}" ${state.playerSetupDraftNames.length <= 1 ? "disabled" : ""}>x</button>
+        `;
+
+        const input = row.querySelector(".player-setup-input");
+        input.addEventListener("input", (event) => {
+          state.playerSetupDraftNames[index] = event.target.value;
+        });
+
+        const removeButton = row.querySelector(".player-remove");
+        removeButton.addEventListener("click", () => {
+          if (state.playerSetupDraftNames.length <= 1) {
+            return;
+          }
+
+          state.playerSetupDraftNames.splice(index, 1);
+          render();
+        });
+
+        playerSetupListEl.appendChild(row);
+      });
+
+      playerSetupAddButton.disabled = state.playerSetupDraftNames.length >= 4;
+      playerSetupApplyButton.disabled = state.playerSetupDraftNames.length < 1;
     }
 
     function updateSoundToggleButton() {
@@ -1733,7 +1961,7 @@
       discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
       const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
       const returnableNemesisCount = getReturnableNemesisCount();
-      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen;
+      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
 
       drawPileButton.disabled = isLocked;
       drawPilePeekButton.disabled = isLocked;
@@ -1743,13 +1971,17 @@
       discardPileButton.disabled = isLocked;
       discardPileNemesisButton.disabled = isLocked || returnableNemesisCount === 0;
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
-      playerCountSelect.disabled = isLocked;
-      helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen;
+      playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
+      helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
+      roundCounterEl.textContent = `Round ${state.round}`;
+      nemesisHealthLabelEl.textContent = state.nemesisName;
+      playerSetupButton.textContent = `${state.playerCount} player${state.playerCount === 1 ? "" : "s"}`;
       updateSoundToggleButton();
 
       renderActionModal();
       renderDiscardModal();
       renderHelpModal();
+      renderPlayerSetupModal();
     }
 
     function drawNextCard() {
@@ -1838,11 +2070,16 @@
       render();
     }
 
-    function startNewGameWithPlayerCount(playerCount) {
-      state.playerCount = playerCount;
+    function startNewGameWithSetup(playerNames, nemesisName) {
+      const sanitizedNames = getSanitizedPlayerNames(playerNames);
+      state.playerNames = sanitizedNames;
+      state.playerCount = sanitizedNames.length;
+      state.nemesisName = getSanitizedNemesisName(nemesisName);
+      state.round = 1;
       resetPendingAction();
       closeDiscardModal();
       closeHelpModal();
+      closePlayerSetupModal();
       reshuffleFreshPile();
       render();
     }
@@ -1864,14 +2101,36 @@
       event.stopPropagation();
       reorderDrawPile();
     });
-    playerCountSelect.addEventListener("change", (event) => {
-      const nextCount = Number.parseInt(event.target.value, 10);
+    playerSetupButton.addEventListener("click", (event) => {
+      event.stopPropagation();
 
-      if (![1, 2, 3, 4].includes(nextCount)) {
+      if (state.pendingAction || state.discardViewOpen || state.helpViewOpen) {
         return;
       }
 
-      startNewGameWithPlayerCount(nextCount);
+      openPlayerSetupModal();
+    });
+    playerSetupAddButton.addEventListener("click", () => {
+      if (state.playerSetupDraftNames.length >= 4) {
+        return;
+      }
+
+      const nextIndex = state.playerSetupDraftNames.length;
+      state.playerSetupDraftNames.push(getDefaultPlayerName(nextIndex));
+      render();
+    });
+    playerSetupApplyButton.addEventListener("click", () => {
+      startNewGameWithSetup(state.playerSetupDraftNames, state.playerSetupDraftNemesisName);
+    });
+    playerSetupCancelButton.addEventListener("click", () => {
+      closePlayerSetupModal();
+      render();
+    });
+    playerSetupModalEl.addEventListener("click", (event) => {
+      if (event.target === playerSetupModalEl) {
+        closePlayerSetupModal();
+        render();
+      }
     });
     soundToggleButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -1987,6 +2246,12 @@
 
       if (state.helpViewOpen) {
         closeHelpModal();
+        render();
+        return;
+      }
+
+      if (state.playerSetupViewOpen) {
+        closePlayerSetupModal();
         render();
       }
     });
