@@ -7,6 +7,14 @@
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Draw Pile</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J27NJFV8L8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J27NJFV8L8');
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
 
@@ -727,6 +735,7 @@
       justify-items: center;
       cursor: grab;
       user-select: none;
+      touch-action: none;
       transition: box-shadow 120ms ease, transform 120ms ease;
     }
 
@@ -1691,7 +1700,7 @@
           orderedCards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
-            cardRow.draggable = true;
+            cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
               <div class="reorder-meta">
@@ -1700,49 +1709,62 @@
               </div>
             `;
 
-            cardRow.addEventListener("dragstart", (event) => {
+            cardRow.addEventListener("pointerdown", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
+              cardRow.setPointerCapture(event.pointerId);
+              event.preventDefault();
+            });
 
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(index));
+            cardRow.addEventListener("pointermove", (event) => {
+              if (draggedIndex === null || draggedIndex !== index) {
+                return;
+              }
+
+              event.preventDefault();
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+
+              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
+              if (targetRow && Number(targetRow.dataset.index) !== index) {
+                targetRow.classList.add("is-drop-target");
               }
             });
 
-            cardRow.addEventListener("dragend", () => {
+            cardRow.addEventListener("pointerup", (event) => {
+              if (draggedIndex === null || draggedIndex !== index) {
+                draggedIndex = null;
+                cardRow.classList.remove("is-dragging");
+                listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                  entry.classList.remove("is-drop-target");
+                });
+                return;
+              }
+
+              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
+              const targetIndex = targetRow ? Number(targetRow.dataset.index) : null;
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+
+              if (Number.isInteger(targetIndex) && targetIndex !== null && targetIndex !== index) {
+                const targetCard = orderedCards[targetIndex];
+                orderedCards[targetIndex] = orderedCards[draggedIndex];
+                orderedCards[draggedIndex] = targetCard;
+                renderPeekTwoReorderCards();
+              }
+
+              draggedIndex = null;
+              cardRow.classList.remove("is-dragging");
+            });
+
+            cardRow.addEventListener("pointercancel", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
               listHost.querySelectorAll(".reorder-card").forEach((entry) => {
                 entry.classList.remove("is-drop-target");
               });
-            });
-
-            cardRow.addEventListener("dragover", (event) => {
-              event.preventDefault();
-              if (draggedIndex === null || draggedIndex === index) {
-                return;
-              }
-
-              cardRow.classList.add("is-drop-target");
-            });
-
-            cardRow.addEventListener("dragleave", () => {
-              cardRow.classList.remove("is-drop-target");
-            });
-
-            cardRow.addEventListener("drop", (event) => {
-              event.preventDefault();
-              cardRow.classList.remove("is-drop-target");
-
-              if (draggedIndex === null || draggedIndex === index) {
-                return;
-              }
-
-              const targetCard = orderedCards[index];
-              orderedCards[index] = orderedCards[draggedIndex];
-              orderedCards[draggedIndex] = targetCard;
-              renderPeekTwoReorderCards();
             });
 
             listHost.appendChild(cardRow);
@@ -1887,7 +1909,6 @@
           state.pendingAction.cards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
-            cardRow.draggable = true;
             cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
@@ -1897,49 +1918,62 @@
               </div>
             `;
 
-            cardRow.addEventListener("dragstart", (event) => {
+            cardRow.addEventListener("pointerdown", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
+              cardRow.setPointerCapture(event.pointerId);
+              event.preventDefault();
+            });
 
-              if (event.dataTransfer) {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(index));
+            cardRow.addEventListener("pointermove", (event) => {
+              if (draggedIndex === null || draggedIndex !== index) {
+                return;
+              }
+
+              event.preventDefault();
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+
+              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
+              if (targetRow && Number(targetRow.dataset.index) !== index) {
+                targetRow.classList.add("is-drop-target");
               }
             });
 
-            cardRow.addEventListener("dragend", () => {
+            cardRow.addEventListener("pointerup", (event) => {
+              if (draggedIndex === null || draggedIndex !== index) {
+                draggedIndex = null;
+                cardRow.classList.remove("is-dragging");
+                listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                  entry.classList.remove("is-drop-target");
+                });
+                return;
+              }
+
+              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
+              const targetIndex = targetRow ? Number(targetRow.dataset.index) : null;
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
+                entry.classList.remove("is-drop-target");
+              });
+
+              if (Number.isInteger(targetIndex) && targetIndex !== null && targetIndex !== index) {
+                const targetCard = state.pendingAction.cards[targetIndex];
+                state.pendingAction.cards[targetIndex] = state.pendingAction.cards[draggedIndex];
+                state.pendingAction.cards[draggedIndex] = targetCard;
+                renderReorderCards();
+              }
+
+              draggedIndex = null;
+              cardRow.classList.remove("is-dragging");
+            });
+
+            cardRow.addEventListener("pointercancel", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
               listHost.querySelectorAll(".reorder-card").forEach((entry) => {
                 entry.classList.remove("is-drop-target");
               });
-            });
-
-            cardRow.addEventListener("dragover", (event) => {
-              event.preventDefault();
-              if (draggedIndex === null || draggedIndex === index) {
-                return;
-              }
-
-              cardRow.classList.add("is-drop-target");
-            });
-
-            cardRow.addEventListener("dragleave", () => {
-              cardRow.classList.remove("is-drop-target");
-            });
-
-            cardRow.addEventListener("drop", (event) => {
-              event.preventDefault();
-              cardRow.classList.remove("is-drop-target");
-
-              if (draggedIndex === null || draggedIndex === index) {
-                return;
-              }
-
-              const targetCard = state.pendingAction.cards[index];
-              state.pendingAction.cards[index] = state.pendingAction.cards[draggedIndex];
-              state.pendingAction.cards[draggedIndex] = targetCard;
-              renderReorderCards();
             });
 
             listHost.appendChild(cardRow);
