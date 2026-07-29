@@ -1051,7 +1051,7 @@
             <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
             <div id="round-counter" class="round-counter">Round 1</div>
             <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
-            <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">☀️</button>
+            <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">🌙</button>
             <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
           </div>
 
@@ -1271,7 +1271,7 @@
     async function requestWakeLock() {
       if (!('wakeLock' in navigator)) {
         alert('Wake lock is not supported in this browser.');
-        return;
+        return false;
       }
 
       try {
@@ -1281,10 +1281,24 @@
           wakeLockRequested = false;
           render();
         });
+        return true;
       } catch (error) {
         console.error('Wake lock request failed:', error);
         wakeLockRequested = false;
+        return false;
       }
+    }
+
+    async function releaseWakeLock() {
+      if (wakeLock) {
+        try {
+          await wakeLock.release();
+        } catch (error) {
+          console.error('Wake lock release failed:', error);
+        }
+      }
+      wakeLock = null;
+      wakeLockRequested = false;
     }
 
     document.addEventListener('visibilitychange', async () => {
@@ -2138,7 +2152,7 @@
       playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
       helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
       wakeLockButton.disabled = isLocked;
-      wakeLockButton.textContent = wakeLockRequested ? '☀️ On' : '☀️';
+      wakeLockButton.textContent = wakeLockRequested ? '☀️' : '🌙';
       roundCounterEl.textContent = `Round ${state.round}`;
       nemesisHealthLabelEl.textContent = state.nemesisName;
       playerSetupButton.textContent = `${state.playerCount} player${state.playerCount === 1 ? "" : "s"}`;
@@ -2305,7 +2319,13 @@
     });
     wakeLockButton.addEventListener("click", async (event) => {
       event.stopPropagation();
-      await requestWakeLock();
+
+      if (wakeLockRequested) {
+        await releaseWakeLock();
+      } else {
+        await requestWakeLock();
+      }
+
       render();
     });
     helpButton.addEventListener("click", (event) => {
