@@ -203,13 +203,6 @@
       align-self: stretch;
     }
 
-    .health-reset {
-      width: 100%;
-      padding: 6px 10px;
-      font-size: 0.82rem;
-      border-radius: 10px;
-    }
-
     .health-list {
       display: grid;
       grid-template-columns: 1fr;
@@ -299,6 +292,16 @@
       align-items: start;
     }
 
+    .controls-topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
     .drawpile-wrap {
       position: relative;
       display: grid;
@@ -320,8 +323,8 @@
       letter-spacing: 0.07em;
       font-size: 0.78rem;
       text-align: center;
-      padding: 6px 10px;
-      width: 100%;
+      padding: 6px 12px;
+      width: min(214px, 100%);
     }
 
     .discarddeck {
@@ -733,10 +736,39 @@
       gap: 8px;
       align-content: start;
       justify-items: center;
-      cursor: grab;
+      cursor: default;
       user-select: none;
-      touch-action: none;
+      touch-action: pan-x pan-y;
       transition: box-shadow 180ms ease, transform 180ms ease, opacity 180ms ease;
+    }
+
+    .reorder-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .reorder-move {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid rgba(29, 26, 22, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--ink);
+      font-size: 0.95rem;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      box-shadow: none;
+    }
+
+    .reorder-move:hover:enabled {
+      transform: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.96);
     }
 
     .reorder-card:active {
@@ -1014,13 +1046,14 @@
     <section class="layout">
       <aside class="controls">
         <div class="controls-layout">
-          <div class="pile-column">
-            <div class="setup-row">
-              <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
-              <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
-              <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
-            </div>
+          <div class="controls-topbar">
+            <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
+            <div id="round-counter" class="round-counter">Round 1</div>
+            <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
+            <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
+          </div>
 
+          <div class="pile-column">
             <div class="drawpile-wrap">
               <button id="draw-pile" class="drawpile" aria-label="Draw next card">
                 <span class="drawpile-label">Draw Pile</span>
@@ -1034,7 +1067,6 @@
             </div>
           </div>
           <div class="discard-column">
-            <div id="round-counter" class="round-counter">Round 1</div>
             <div class="discard-wrap">
               <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
                 <span class="discarddeck-label">Discard Pile</span>
@@ -1066,7 +1098,6 @@
                 </div>
               </div>
             </div>
-            <button id="health-reset" class="secondary health-reset" aria-label="Reset health values">Reset Health</button>
           </section>
         </div>
       </aside>
@@ -1225,7 +1256,6 @@
     const cityIncreaseButton = document.getElementById("city-increase");
     const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
     const nemesisIncreaseButton = document.getElementById("nemesis-increase");
-    const healthResetButton = document.getElementById("health-reset");
     let shuffleAnimationTimeoutId = null;
     const nemesisSoundByCard = {
       "Nemesis 1": new Audio("resources/Nemesis%201.mp3"),
@@ -1700,74 +1730,80 @@
         function renderPeekTwoReorderCards() {
           listHost.innerHTML = "";
 
+          let dragStartPoint = null;
+          let isDraggingCard = false;
+
           orderedCards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
+            cardRow.draggable = true;
             cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-actions">
+                <button class="reorder-move" type="button" data-direction="left" aria-label="Move card left">←</button>
+                <button class="reorder-move" type="button" data-direction="right" aria-label="Move card right">→</button>
+              </div>
               <div class="reorder-meta">
                 <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
-                <p class="reorder-hint">Touch and drag to reorder.</p>
+                <p class="reorder-hint">Drag to swap or use the arrows.</p>
               </div>
             `;
 
-            cardRow.addEventListener("pointerdown", (event) => {
+            const moveButtons = cardRow.querySelectorAll(".reorder-move");
+            moveButtons.forEach((button) => {
+              button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const direction = button.dataset.direction;
+                const targetIndex = direction === "left" ? index - 1 : index + 1;
+                if (targetIndex < 0 || targetIndex >= orderedCards.length) {
+                  return;
+                }
+
+                const targetCard = orderedCards[targetIndex];
+                orderedCards[targetIndex] = orderedCards[index];
+                orderedCards[index] = targetCard;
+                renderPeekTwoReorderCards();
+              });
+            });
+
+            cardRow.addEventListener("dragstart", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
-              cardRow.setPointerCapture(event.pointerId);
-              event.preventDefault();
-            });
-
-            cardRow.addEventListener("pointermove", (event) => {
-              if (draggedIndex === null || draggedIndex !== index) {
-                return;
-              }
-
-              event.preventDefault();
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
-
-              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
-              if (targetRow && Number(targetRow.dataset.index) !== index) {
-                targetRow.classList.add("is-drop-target");
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
               }
             });
 
-            cardRow.addEventListener("pointerup", (event) => {
-              if (draggedIndex === null || draggedIndex !== index) {
-                draggedIndex = null;
-                cardRow.classList.remove("is-dragging");
-                listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                  entry.classList.remove("is-drop-target");
-                });
-                return;
-              }
-
-              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
-              const targetIndex = targetRow ? Number(targetRow.dataset.index) : null;
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
-
-              if (Number.isInteger(targetIndex) && targetIndex !== null && targetIndex !== index) {
-                const targetCard = orderedCards[targetIndex];
-                orderedCards[targetIndex] = orderedCards[draggedIndex];
-                orderedCards[draggedIndex] = targetCard;
-                renderPeekTwoReorderCards();
-              }
-
+            cardRow.addEventListener("dragend", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => entry.classList.remove("is-drop-target"));
             });
 
-            cardRow.addEventListener("pointercancel", () => {
-              draggedIndex = null;
-              cardRow.classList.remove("is-dragging");
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
+            cardRow.addEventListener("dragover", (event) => {
+              event.preventDefault();
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+              cardRow.classList.add("is-drop-target");
+            });
+
+            cardRow.addEventListener("dragleave", () => {
+              cardRow.classList.remove("is-drop-target");
+            });
+
+            cardRow.addEventListener("drop", (event) => {
+              event.preventDefault();
+              cardRow.classList.remove("is-drop-target");
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+              const targetCard = orderedCards[index];
+              orderedCards[index] = orderedCards[draggedIndex];
+              orderedCards[draggedIndex] = targetCard;
+              renderPeekTwoReorderCards();
             });
 
             listHost.appendChild(cardRow);
@@ -1909,74 +1945,80 @@
         function renderReorderCards() {
           listHost.innerHTML = "";
 
+          let dragStartPoint = null;
+          let isDraggingCard = false;
+
           state.pendingAction.cards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
+            cardRow.draggable = true;
             cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-actions">
+                <button class="reorder-move" type="button" data-direction="left" aria-label="Move card left">←</button>
+                <button class="reorder-move" type="button" data-direction="right" aria-label="Move card right">→</button>
+              </div>
               <div class="reorder-meta">
                 <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
-                <p class="reorder-hint">Touch and drag to reorder.</p>
+                <p class="reorder-hint">Drag to swap or use the arrows.</p>
               </div>
             `;
 
-            cardRow.addEventListener("pointerdown", (event) => {
+            const moveButtons = cardRow.querySelectorAll(".reorder-move");
+            moveButtons.forEach((button) => {
+              button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const direction = button.dataset.direction;
+                const targetIndex = direction === "left" ? index - 1 : index + 1;
+                if (targetIndex < 0 || targetIndex >= state.pendingAction.cards.length) {
+                  return;
+                }
+
+                const targetCard = state.pendingAction.cards[targetIndex];
+                state.pendingAction.cards[targetIndex] = state.pendingAction.cards[index];
+                state.pendingAction.cards[index] = targetCard;
+                renderReorderCards();
+              });
+            });
+
+            cardRow.addEventListener("dragstart", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
-              cardRow.setPointerCapture(event.pointerId);
-              event.preventDefault();
-            });
-
-            cardRow.addEventListener("pointermove", (event) => {
-              if (draggedIndex === null || draggedIndex !== index) {
-                return;
-              }
-
-              event.preventDefault();
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
-
-              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
-              if (targetRow && Number(targetRow.dataset.index) !== index) {
-                targetRow.classList.add("is-drop-target");
+              if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(index));
               }
             });
 
-            cardRow.addEventListener("pointerup", (event) => {
-              if (draggedIndex === null || draggedIndex !== index) {
-                draggedIndex = null;
-                cardRow.classList.remove("is-dragging");
-                listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                  entry.classList.remove("is-drop-target");
-                });
-                return;
-              }
-
-              const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest(".reorder-card");
-              const targetIndex = targetRow ? Number(targetRow.dataset.index) : null;
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
-
-              if (Number.isInteger(targetIndex) && targetIndex !== null && targetIndex !== index) {
-                const targetCard = state.pendingAction.cards[targetIndex];
-                state.pendingAction.cards[targetIndex] = state.pendingAction.cards[draggedIndex];
-                state.pendingAction.cards[draggedIndex] = targetCard;
-                renderReorderCards();
-              }
-
+            cardRow.addEventListener("dragend", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => entry.classList.remove("is-drop-target"));
             });
 
-            cardRow.addEventListener("pointercancel", () => {
-              draggedIndex = null;
-              cardRow.classList.remove("is-dragging");
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
+            cardRow.addEventListener("dragover", (event) => {
+              event.preventDefault();
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+              cardRow.classList.add("is-drop-target");
+            });
+
+            cardRow.addEventListener("dragleave", () => {
+              cardRow.classList.remove("is-drop-target");
+            });
+
+            cardRow.addEventListener("drop", (event) => {
+              event.preventDefault();
+              cardRow.classList.remove("is-drop-target");
+              if (draggedIndex === null || draggedIndex === index) {
+                return;
+              }
+              const targetCard = state.pendingAction.cards[index];
+              state.pendingAction.cards[index] = state.pendingAction.cards[draggedIndex];
+              state.pendingAction.cards[draggedIndex] = targetCard;
+              renderReorderCards();
             });
 
             listHost.appendChild(cardRow);
@@ -2307,11 +2349,6 @@
     });
     nemesisIncreaseButton.addEventListener("click", () => {
       state.nemesisHealth += 1;
-      render();
-    });
-    healthResetButton.addEventListener("click", () => {
-      state.cityHealth = 30;
-      state.nemesisHealth = 70;
       render();
     });
     document.addEventListener("keydown", (event) => {
