@@ -1051,6 +1051,7 @@
             <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
             <div id="round-counter" class="round-counter">Round 1</div>
             <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
+            <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">☀️</button>
             <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
           </div>
 
@@ -1144,7 +1145,7 @@
         <li><span class="help-icon">&#9760;</span> Return all Nemesis cards from discard to draw pile and shuffle.</li>
         <li><span class="help-icon">&#8592;</span> Return one player card from discard to draw pile and shuffle.</li>
         <li><span class="help-icon">City / Nemesis +/-</span> Adjust health counters for the city or the nemesis.</li>
-        <li><span class="help-icon">Reset Health</span> Set City to 30 and Nemesis to 70.</li>
+        <li><span class="help-icon">☀️</span> Keep the screen awake while this app is visible (where supported).</li>
       </ul>
       <div class="inline-actions" style="margin-top: 16px;">
         <button id="help-modal-close" class="secondary">Close</button>
@@ -1239,6 +1240,7 @@
     const playerSetupCancelButton = document.getElementById("player-setup-cancel");
     const roundCounterEl = document.getElementById("round-counter");
     const soundToggleButton = document.getElementById("sound-toggle");
+    const wakeLockButton = document.getElementById("wake-lock-button");
     const helpButton = document.getElementById("help-button");
     const discardPileButton = document.getElementById("discard-pile-button");
     const discardPileNemesisButton = document.getElementById("discard-pile-nemesis");
@@ -1258,11 +1260,38 @@
     const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
     const nemesisIncreaseButton = document.getElementById("nemesis-increase");
     let shuffleAnimationTimeoutId = null;
+    let wakeLock = null;
+    let wakeLockRequested = false;
     const nemesisSoundByCard = {
       "Nemesis 1": new Audio("resources/Nemesis%201.mp3"),
       "Nemesis 2": new Audio("resources/Nemesis%202.mp3")
     };
     const preloadedCardImages = [];
+
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) {
+        alert('Wake lock is not supported in this browser.');
+        return;
+      }
+
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLockRequested = true;
+        wakeLock.addEventListener('release', () => {
+          wakeLockRequested = false;
+          render();
+        });
+      } catch (error) {
+        console.error('Wake lock request failed:', error);
+        wakeLockRequested = false;
+      }
+    }
+
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLockRequested && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    });
 
     function shuffle(cards) {
       const nextCards = [...cards];
@@ -2108,6 +2137,8 @@
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
       playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
       helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
+      wakeLockButton.disabled = isLocked;
+      wakeLockButton.textContent = wakeLockRequested ? '☀️ On' : '☀️';
       roundCounterEl.textContent = `Round ${state.round}`;
       nemesisHealthLabelEl.textContent = state.nemesisName;
       playerSetupButton.textContent = `${state.playerCount} player${state.playerCount === 1 ? "" : "s"}`;
@@ -2270,6 +2301,11 @@
     soundToggleButton.addEventListener("click", (event) => {
       event.stopPropagation();
       state.soundMuted = !state.soundMuted;
+      render();
+    });
+    wakeLockButton.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      await requestWakeLock();
       render();
     });
     helpButton.addEventListener("click", (event) => {
