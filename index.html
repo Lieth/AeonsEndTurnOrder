@@ -219,6 +219,13 @@
       gap: 8px;
     }
 
+    .health-main {
+      display: grid;
+      gap: 2px;
+      align-content: center;
+      cursor: pointer;
+    }
+
     .health-label {
       color: #e8dfd3;
       text-transform: uppercase;
@@ -231,8 +238,8 @@
       font-size: clamp(1rem, 2vw, 1.3rem);
       font-weight: 700;
       letter-spacing: 0.04em;
-      min-width: 2ch;
-      text-align: right;
+      min-width: 0;
+      text-align: left;
     }
 
     .health-actions {
@@ -241,14 +248,14 @@
     }
 
     .health-actions button {
-      width: 28px;
-      min-width: 28px;
-      height: 28px;
+      width: 34px;
+      min-width: 34px;
+      height: 34px;
       padding: 0;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.14);
       color: #fff;
-      font-size: 0.95rem;
+      font-size: 1.05rem;
     }
 
     button {
@@ -896,9 +903,19 @@
 
     .player-setup-row {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: auto 1fr auto;
       gap: 8px;
       align-items: center;
+    }
+
+    .player-setup-preview {
+      width: 28px;
+      height: 38px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 244, 233, 0.32);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      background: rgba(255, 244, 233, 0.08);
     }
 
     .player-setup-input {
@@ -935,6 +952,20 @@
       background: rgba(255, 244, 233, 0.16);
       color: #fff4e9;
       box-shadow: none;
+    }
+
+    .health-edit-field {
+      margin-top: 10px;
+      margin-bottom: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .health-edit-field label {
+      color: #fff4e9;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.76rem;
     }
 
     .empty-state {
@@ -975,10 +1006,22 @@
       }
 
       .health-actions button {
-        width: 24px;
-        min-width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        font-size: 1.25rem;
+      }
+
+      .health-row {
+        padding: 10px;
+      }
+
+      .health-main {
+        gap: 4px;
+      }
+
+      .health-value {
+        font-size: 1.15rem;
       }
 
       .hero,
@@ -988,7 +1031,12 @@
       }
 
       body {
+        align-items: flex-start;
         padding: 8px;
+      }
+
+      .app {
+        margin-top: 4px;
       }
     }
   </style>
@@ -1038,18 +1086,22 @@
           <section class="health-panel">
             <div class="health-list">
               <div class="health-row">
-                <div class="health-label">City</div>
+                <div id="city-health-main" class="health-main" role="button" tabindex="0" aria-label="Set city health">
+                  <div id="city-health-label" class="health-label">City</div>
+                  <div id="city-health" class="health-value">30</div>
+                </div>
                 <div class="health-actions">
                   <button id="city-decrease" aria-label="Decrease city health">-</button>
-                  <div id="city-health" class="health-value">30</div>
                   <button id="city-increase" aria-label="Increase city health">+</button>
                 </div>
               </div>
               <div class="health-row">
-                <div id="nemesis-health-label" class="health-label">Nemesis</div>
+                <div id="nemesis-health-main" class="health-main" role="button" tabindex="0" aria-label="Set nemesis health">
+                  <div id="nemesis-health-label" class="health-label">Nemesis</div>
+                  <div id="nemesis-health" class="health-value">70</div>
+                </div>
                 <div class="health-actions">
                   <button id="nemesis-decrease" aria-label="Decrease nemesis health">-</button>
-                  <div id="nemesis-health" class="health-value">70</div>
                   <button id="nemesis-increase" aria-label="Increase nemesis health">+</button>
                 </div>
               </div>
@@ -1125,6 +1177,21 @@
     </section>
   </div>
 
+  <div id="health-edit-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="health-edit-title">
+    <section class="modal">
+      <h2 id="health-edit-title">Set Health</h2>
+      <p id="health-edit-copy" class="modal-copy">Enter current health value.</p>
+      <div class="health-edit-field">
+        <label for="health-edit-input">Health Value</label>
+        <input id="health-edit-input" class="player-setup-input" type="number" min="0" step="1" inputmode="numeric" aria-label="Health value">
+      </div>
+      <div class="inline-actions">
+        <button id="health-edit-apply" class="primary">Apply</button>
+        <button id="health-edit-cancel" class="secondary">Cancel</button>
+      </div>
+    </section>
+  </div>
+
   <script>
     function getBaseCardsForPlayers(playerCount) {
       const playerCardsByCount = {
@@ -1170,6 +1237,9 @@
       playerSetupViewOpen: false,
       playerSetupDraftNames: [],
       playerSetupDraftNemesisName: "Nemesis",
+      healthEditViewOpen: false,
+      healthEditTarget: null,
+      healthEditDraftValue: "0",
       round: 1,
       soundMuted: false,
       cityHealth: 30,
@@ -1193,6 +1263,14 @@
     const playerSetupAddButton = document.getElementById("player-setup-add");
     const playerSetupApplyButton = document.getElementById("player-setup-apply");
     const playerSetupCancelButton = document.getElementById("player-setup-cancel");
+    const healthEditModalEl = document.getElementById("health-edit-modal");
+    const healthEditTitleEl = document.getElementById("health-edit-title");
+    const healthEditCopyEl = document.getElementById("health-edit-copy");
+    const healthEditInputEl = document.getElementById("health-edit-input");
+    const healthEditApplyButton = document.getElementById("health-edit-apply");
+    const healthEditCancelButton = document.getElementById("health-edit-cancel");
+    const cityHealthMainEl = document.getElementById("city-health-main");
+    const nemesisHealthMainEl = document.getElementById("nemesis-health-main");
     const roundCounterEl = document.getElementById("round-counter");
     const soundToggleButton = document.getElementById("sound-toggle");
     const helpButton = document.getElementById("help-button");
@@ -1207,6 +1285,7 @@
     const drawPileReorderButton = document.getElementById("draw-pile-reorder");
     const drawPileCountEl = document.getElementById("draw-pile-count");
     const cityHealthEl = document.getElementById("city-health");
+    const cityHealthLabelEl = document.getElementById("city-health-label");
     const nemesisHealthEl = document.getElementById("nemesis-health");
     const nemesisHealthLabelEl = document.getElementById("nemesis-health-label");
     const cityDecreaseButton = document.getElementById("city-decrease");
@@ -1352,6 +1431,24 @@
       state.playerSetupDraftNemesisName = state.nemesisName;
     }
 
+    function openHealthEditModal(target) {
+      state.healthEditTarget = target;
+      state.healthEditDraftValue = target === "city" ? String(state.cityHealth) : String(state.nemesisHealth);
+      state.healthEditViewOpen = true;
+      render();
+
+      setTimeout(() => {
+        healthEditInputEl.focus();
+        healthEditInputEl.select();
+      }, 0);
+    }
+
+    function closeHealthEditModal() {
+      state.healthEditViewOpen = false;
+      state.healthEditTarget = null;
+      state.healthEditDraftValue = "0";
+    }
+
     function canClosePendingActionWithEscape() {
       if (!state.pendingAction) {
         return false;
@@ -1390,6 +1487,11 @@
 
     function getDefaultPlayerName(index) {
       return `Player ${index + 1}`;
+    }
+
+    function getPlayerPreviewPath(index) {
+      const clamped = Math.min(4, Math.max(1, index + 1));
+      return `resources/Player%20${clamped}.png`;
     }
 
     function escapeHtml(value) {
@@ -1440,6 +1542,7 @@
         const row = document.createElement("div");
         row.className = "player-setup-row";
         row.innerHTML = `
+          <img class="player-setup-preview" src="${getPlayerPreviewPath(index)}" alt="Player ${index + 1} card color preview">
           <input class="player-setup-input" data-index="${index}" type="text" maxlength="40" value="${escapeHtml(name)}" placeholder="${escapeHtml(getDefaultPlayerName(index))}" aria-label="Player ${index + 1} name">
           <button class="player-remove" data-index="${index}" aria-label="Remove player ${index + 1}" ${state.playerSetupDraftNames.length <= 1 ? "disabled" : ""}>x</button>
         `;
@@ -1995,6 +2098,56 @@
       helpModalEl.classList.remove("active");
     }
 
+    function renderHealthEditModal() {
+      if (!state.healthEditViewOpen || !state.healthEditTarget) {
+        healthEditModalEl.classList.remove("active");
+        return;
+      }
+
+      healthEditModalEl.classList.add("active");
+      const label = state.healthEditTarget === "city" ? "City" : state.nemesisName;
+      healthEditTitleEl.textContent = `${label} Health`;
+      healthEditCopyEl.textContent = `Enter current ${label.toLowerCase()} health.`;
+      healthEditInputEl.value = state.healthEditDraftValue;
+    }
+
+    function applyHealthEdit() {
+      if (!state.healthEditTarget) {
+        closeHealthEditModal();
+        render();
+        return;
+      }
+
+      const parsed = Number.parseInt(healthEditInputEl.value, 10);
+      if (Number.isNaN(parsed)) {
+        return;
+      }
+
+      const nextValue = Math.max(0, parsed);
+      if (state.healthEditTarget === "city") {
+        state.cityHealth = nextValue;
+      } else {
+        state.nemesisHealth = nextValue;
+      }
+
+      closeHealthEditModal();
+      render();
+    }
+
+    function canOpenHealthEditor() {
+      return !(state.pendingAction || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen);
+    }
+
+    function bindHealthEditTrigger(element, target) {
+      element.addEventListener("click", () => {
+        if (!canOpenHealthEditor()) {
+          return;
+        }
+
+        openHealthEditModal(target);
+      });
+    }
+
     function render() {
       if (state.currentCard) {
         currentCardImageEl.src = getCardImagePath(state.currentCard);
@@ -2016,7 +2169,7 @@
       discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
       const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
       const returnableNemesisCount = getReturnableNemesisCount();
-      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
+      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen;
 
       drawPileButton.disabled = isLocked;
       drawPilePeekButton.disabled = isLocked;
@@ -2030,6 +2183,8 @@
       helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
       roundCounterEl.textContent = `Round ${state.round}`;
       nemesisHealthLabelEl.textContent = state.nemesisName;
+      cityHealthMainEl.setAttribute("aria-label", "Set city health");
+      nemesisHealthMainEl.setAttribute("aria-label", `Set ${state.nemesisName} health`);
       playerSetupButton.textContent = `${state.playerCount} player${state.playerCount === 1 ? "" : "s"}`;
       updateSoundToggleButton();
 
@@ -2037,6 +2192,7 @@
       renderDiscardModal();
       renderHelpModal();
       renderPlayerSetupModal();
+      renderHealthEditModal();
     }
 
     function drawNextCard() {
@@ -2256,6 +2412,46 @@
         render();
       }
     });
+    bindHealthEditTrigger(cityHealthMainEl, "city");
+    bindHealthEditTrigger(cityHealthLabelEl, "city");
+    bindHealthEditTrigger(cityHealthEl, "city");
+    bindHealthEditTrigger(nemesisHealthMainEl, "nemesis");
+    bindHealthEditTrigger(nemesisHealthLabelEl, "nemesis");
+    bindHealthEditTrigger(nemesisHealthEl, "nemesis");
+    cityHealthMainEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        cityHealthMainEl.click();
+      }
+    });
+    nemesisHealthMainEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        nemesisHealthMainEl.click();
+      }
+    });
+    healthEditApplyButton.addEventListener("click", () => {
+      applyHealthEdit();
+    });
+    healthEditCancelButton.addEventListener("click", () => {
+      closeHealthEditModal();
+      render();
+    });
+    healthEditInputEl.addEventListener("input", (event) => {
+      state.healthEditDraftValue = event.target.value;
+    });
+    healthEditInputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyHealthEdit();
+      }
+    });
+    healthEditModalEl.addEventListener("click", (event) => {
+      if (event.target === healthEditModalEl) {
+        closeHealthEditModal();
+        render();
+      }
+    });
     cityDecreaseButton.addEventListener("click", () => {
       state.cityHealth = Math.max(0, state.cityHealth - 1);
       render();
@@ -2307,6 +2503,12 @@
 
       if (state.playerSetupViewOpen) {
         closePlayerSetupModal();
+        render();
+        return;
+      }
+
+      if (state.healthEditViewOpen) {
+        closeHealthEditModal();
         render();
       }
     });
