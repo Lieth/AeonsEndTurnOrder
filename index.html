@@ -7,6 +7,15 @@
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Draw Pile</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J27NJFV8L8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-J27NJFV8L8');
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap');
 
@@ -195,13 +204,6 @@
       align-self: stretch;
     }
 
-    .health-reset {
-      width: 100%;
-      padding: 6px 10px;
-      font-size: 0.82rem;
-      border-radius: 10px;
-    }
-
     .health-list {
       display: grid;
       grid-template-columns: 1fr;
@@ -298,6 +300,16 @@
       align-items: start;
     }
 
+    .controls-topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
     .drawpile-wrap {
       position: relative;
       display: grid;
@@ -319,8 +331,8 @@
       letter-spacing: 0.07em;
       font-size: 0.78rem;
       text-align: center;
-      padding: 6px 10px;
-      width: 100%;
+      padding: 6px 12px;
+      width: min(214px, 100%);
     }
 
     .discarddeck {
@@ -732,9 +744,39 @@
       gap: 8px;
       align-content: start;
       justify-items: center;
-      cursor: grab;
+      cursor: default;
       user-select: none;
-      transition: box-shadow 120ms ease, transform 120ms ease;
+      touch-action: pan-x pan-y;
+      transition: box-shadow 180ms ease, transform 180ms ease, opacity 180ms ease;
+    }
+
+    .reorder-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .reorder-move {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 1px solid rgba(29, 26, 22, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--ink);
+      font-size: 0.95rem;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      box-shadow: none;
+    }
+
+    .reorder-move:hover:enabled {
+      transform: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.96);
     }
 
     .reorder-card:active {
@@ -742,12 +784,15 @@
     }
 
     .reorder-card.is-dragging {
-      opacity: 0.6;
-      transform: scale(0.99);
+      opacity: 0.75;
+      transform: scale(0.98) rotate(-1deg);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+      z-index: 2;
     }
 
     .reorder-card.is-drop-target {
-      box-shadow: inset 0 0 0 2px rgba(180, 79, 43, 0.35);
+      box-shadow: inset 0 0 0 2px rgba(180, 79, 43, 0.35), 0 10px 22px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
     }
 
     .reorder-meta {
@@ -1050,13 +1095,15 @@
     <section class="layout">
       <aside class="controls">
         <div class="controls-layout">
-          <div class="pile-column">
-            <div class="setup-row">
-              <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
-              <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
-              <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
-            </div>
+          <div class="controls-topbar">
+            <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
+            <div id="round-counter" class="round-counter">Round 1</div>
+            <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
+            <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">🌙</button>
+            <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
+          </div>
 
+          <div class="pile-column">
             <div class="drawpile-wrap">
               <button id="draw-pile" class="drawpile" aria-label="Draw next card">
                 <span class="drawpile-label">Draw Pile</span>
@@ -1070,7 +1117,6 @@
             </div>
           </div>
           <div class="discard-column">
-            <div id="round-counter" class="round-counter">Round 1</div>
             <div class="discard-wrap">
               <button id="discard-pile-button" class="discarddeck" aria-label="View discard pile">
                 <span class="discarddeck-label">Discard Pile</span>
@@ -1106,7 +1152,6 @@
                 </div>
               </div>
             </div>
-            <button id="health-reset" class="secondary health-reset" aria-label="Reset health values">Reset Health</button>
           </section>
         </div>
       </aside>
@@ -1152,7 +1197,7 @@
         <li><span class="help-icon">&#9760;</span> Return all Nemesis cards from discard to draw pile and shuffle.</li>
         <li><span class="help-icon">&#8592;</span> Return one player card from discard to draw pile and shuffle.</li>
         <li><span class="help-icon">City / Nemesis +/-</span> Adjust health counters for the city or the nemesis.</li>
-        <li><span class="help-icon">Reset Health</span> Set City to 30 and Nemesis to 70.</li>
+        <li><span class="help-icon">☀️</span> Keep the screen awake while this app is visible (where supported).</li>
       </ul>
       <div class="inline-actions" style="margin-top: 16px;">
         <button id="help-modal-close" class="secondary">Close</button>
@@ -1273,6 +1318,7 @@
     const nemesisHealthMainEl = document.getElementById("nemesis-health-main");
     const roundCounterEl = document.getElementById("round-counter");
     const soundToggleButton = document.getElementById("sound-toggle");
+    const wakeLockButton = document.getElementById("wake-lock-button");
     const helpButton = document.getElementById("help-button");
     const discardPileButton = document.getElementById("discard-pile-button");
     const discardPileNemesisButton = document.getElementById("discard-pile-nemesis");
@@ -1292,13 +1338,53 @@
     const cityIncreaseButton = document.getElementById("city-increase");
     const nemesisDecreaseButton = document.getElementById("nemesis-decrease");
     const nemesisIncreaseButton = document.getElementById("nemesis-increase");
-    const healthResetButton = document.getElementById("health-reset");
     let shuffleAnimationTimeoutId = null;
+    let wakeLock = null;
+    let wakeLockRequested = false;
     const nemesisSoundByCard = {
       "Nemesis 1": new Audio("resources/Nemesis%201.mp3"),
       "Nemesis 2": new Audio("resources/Nemesis%202.mp3")
     };
     const preloadedCardImages = [];
+
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) {
+        alert('Wake lock is not supported in this browser.');
+        return false;
+      }
+
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLockRequested = true;
+        wakeLock.addEventListener('release', () => {
+          wakeLockRequested = false;
+          render();
+        });
+        return true;
+      } catch (error) {
+        console.error('Wake lock request failed:', error);
+        wakeLockRequested = false;
+        return false;
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (wakeLock) {
+        try {
+          await wakeLock.release();
+        } catch (error) {
+          console.error('Wake lock release failed:', error);
+        }
+      }
+      wakeLock = null;
+      wakeLockRequested = false;
+    }
+
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLockRequested && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    });
 
     function shuffle(cards) {
       const nextCards = [...cards];
@@ -1768,7 +1854,7 @@
           return;
         }
 
-        modalCopyEl.textContent = "Drag to reorder left to right. Leftmost card will be drawn first, rightmost card becomes the bottom of these two.";
+        modalCopyEl.textContent = "Touch and drag to reorder left to right. Leftmost card will be drawn first, rightmost card becomes the bottom of these two.";
 
         const orderedCards = [firstCard, secondCard];
         const listHost = document.createElement("div");
@@ -1791,22 +1877,46 @@
         function renderPeekTwoReorderCards() {
           listHost.innerHTML = "";
 
+          let dragStartPoint = null;
+          let isDraggingCard = false;
+
           orderedCards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
             cardRow.draggable = true;
+            cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-actions">
+                <button class="reorder-move" type="button" data-direction="left" aria-label="Move card left">←</button>
+                <button class="reorder-move" type="button" data-direction="right" aria-label="Move card right">→</button>
+              </div>
               <div class="reorder-meta">
                 <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
-                <p class="reorder-hint">Drag left or right.</p>
+                <p class="reorder-hint">Drag to swap or use the arrows.</p>
               </div>
             `;
+
+            const moveButtons = cardRow.querySelectorAll(".reorder-move");
+            moveButtons.forEach((button) => {
+              button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const direction = button.dataset.direction;
+                const targetIndex = direction === "left" ? index - 1 : index + 1;
+                if (targetIndex < 0 || targetIndex >= orderedCards.length) {
+                  return;
+                }
+
+                const targetCard = orderedCards[targetIndex];
+                orderedCards[targetIndex] = orderedCards[index];
+                orderedCards[index] = targetCard;
+                renderPeekTwoReorderCards();
+              });
+            });
 
             cardRow.addEventListener("dragstart", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
-
               if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", String(index));
@@ -1816,9 +1926,7 @@
             cardRow.addEventListener("dragend", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => entry.classList.remove("is-drop-target"));
             });
 
             cardRow.addEventListener("dragover", (event) => {
@@ -1826,7 +1934,6 @@
               if (draggedIndex === null || draggedIndex === index) {
                 return;
               }
-
               cardRow.classList.add("is-drop-target");
             });
 
@@ -1837,11 +1944,9 @@
             cardRow.addEventListener("drop", (event) => {
               event.preventDefault();
               cardRow.classList.remove("is-drop-target");
-
               if (draggedIndex === null || draggedIndex === index) {
                 return;
               }
-
               const targetCard = orderedCards[index];
               orderedCards[index] = orderedCards[draggedIndex];
               orderedCards[draggedIndex] = targetCard;
@@ -1944,7 +2049,7 @@
       }
 
       if (state.pendingAction.type === "drawpileReorder") {
-        modalCopyEl.textContent = "Inspect all cards currently in the draw pile and choose the return order. Drag cards left to right. Leftmost card is drawn first, rightmost card is at the bottom.";
+        modalCopyEl.textContent = "Inspect all cards currently in the draw pile and choose the return order. Touch and drag cards left to right. Leftmost card is drawn first, rightmost card is at the bottom.";
 
         const cards = state.pendingAction.cards;
 
@@ -1987,6 +2092,9 @@
         function renderReorderCards() {
           listHost.innerHTML = "";
 
+          let dragStartPoint = null;
+          let isDraggingCard = false;
+
           state.pendingAction.cards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
@@ -1994,16 +2102,36 @@
             cardRow.dataset.index = String(index);
             cardRow.innerHTML = `
               ${getCardMediaMarkup(card, "decision-card-media")}
+              <div class="reorder-actions">
+                <button class="reorder-move" type="button" data-direction="left" aria-label="Move card left">←</button>
+                <button class="reorder-move" type="button" data-direction="right" aria-label="Move card right">→</button>
+              </div>
               <div class="reorder-meta">
                 <strong>${index + 1}. ${getCardDisplayName(card)}</strong>
-                <p class="reorder-hint">Drag left or right.</p>
+                <p class="reorder-hint">Drag to swap or use the arrows.</p>
               </div>
             `;
+
+            const moveButtons = cardRow.querySelectorAll(".reorder-move");
+            moveButtons.forEach((button) => {
+              button.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const direction = button.dataset.direction;
+                const targetIndex = direction === "left" ? index - 1 : index + 1;
+                if (targetIndex < 0 || targetIndex >= state.pendingAction.cards.length) {
+                  return;
+                }
+
+                const targetCard = state.pendingAction.cards[targetIndex];
+                state.pendingAction.cards[targetIndex] = state.pendingAction.cards[index];
+                state.pendingAction.cards[index] = targetCard;
+                renderReorderCards();
+              });
+            });
 
             cardRow.addEventListener("dragstart", (event) => {
               draggedIndex = index;
               cardRow.classList.add("is-dragging");
-
               if (event.dataTransfer) {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", String(index));
@@ -2013,9 +2141,7 @@
             cardRow.addEventListener("dragend", () => {
               draggedIndex = null;
               cardRow.classList.remove("is-dragging");
-              listHost.querySelectorAll(".reorder-card").forEach((entry) => {
-                entry.classList.remove("is-drop-target");
-              });
+              listHost.querySelectorAll(".reorder-card").forEach((entry) => entry.classList.remove("is-drop-target"));
             });
 
             cardRow.addEventListener("dragover", (event) => {
@@ -2023,7 +2149,6 @@
               if (draggedIndex === null || draggedIndex === index) {
                 return;
               }
-
               cardRow.classList.add("is-drop-target");
             });
 
@@ -2034,11 +2159,9 @@
             cardRow.addEventListener("drop", (event) => {
               event.preventDefault();
               cardRow.classList.remove("is-drop-target");
-
               if (draggedIndex === null || draggedIndex === index) {
                 return;
               }
-
               const targetCard = state.pendingAction.cards[index];
               state.pendingAction.cards[index] = state.pendingAction.cards[draggedIndex];
               state.pendingAction.cards[draggedIndex] = targetCard;
@@ -2181,6 +2304,8 @@
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
       playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
       helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
+      wakeLockButton.disabled = isLocked;
+      wakeLockButton.textContent = wakeLockRequested ? '☀️' : '🌙';
       roundCounterEl.textContent = `Round ${state.round}`;
       nemesisHealthLabelEl.textContent = state.nemesisName;
       cityHealthMainEl.setAttribute("aria-label", "Set city health");
@@ -2348,6 +2473,17 @@
       state.soundMuted = !state.soundMuted;
       render();
     });
+    wakeLockButton.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      if (wakeLockRequested) {
+        await releaseWakeLock();
+      } else {
+        await requestWakeLock();
+      }
+
+      render();
+    });
     helpButton.addEventListener("click", (event) => {
       event.stopPropagation();
 
@@ -2466,11 +2602,6 @@
     });
     nemesisIncreaseButton.addEventListener("click", () => {
       state.nemesisHealth += 1;
-      render();
-    });
-    healthResetButton.addEventListener("click", () => {
-      state.cityHealth = 30;
-      state.nemesisHealth = 70;
       render();
     });
     document.addEventListener("keydown", (event) => {
