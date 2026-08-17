@@ -1185,7 +1185,7 @@
         Changing player count starts a fresh game by rebuilding the draw pile and emptying discard.
       </p>
       <ul class="help-list">
-        <li><span class="help-icon">Players</span> Select 1-4 players and reset to a new game setup for that count.</li>
+        <li><span class="help-icon">Players</span> Open setup to add/remove 1-4 players, set names, and start a fresh game.</li>
         <li><span class="help-icon">&#128266;/&#128263;</span> Toggle sounds on/off.</li>
         <li><span class="help-icon">?</span> Open this help popup.</li>
         <li><span class="help-icon">Draw Pile</span> Click on pile to draw next card.</li>
@@ -1877,9 +1877,6 @@
         function renderPeekTwoReorderCards() {
           listHost.innerHTML = "";
 
-          let dragStartPoint = null;
-          let isDraggingCard = false;
-
           orderedCards.forEach((card, index) => {
             const cardRow = document.createElement("div");
             cardRow.className = "decision-card reorder-card";
@@ -2091,9 +2088,6 @@
 
         function renderReorderCards() {
           listHost.innerHTML = "";
-
-          let dragStartPoint = null;
-          let isDraggingCard = false;
 
           state.pendingAction.cards.forEach((card, index) => {
             const cardRow = document.createElement("div");
@@ -2310,7 +2304,7 @@
       nemesisHealthLabelEl.textContent = state.nemesisName;
       cityHealthMainEl.setAttribute("aria-label", "Set city health");
       nemesisHealthMainEl.setAttribute("aria-label", `Set ${state.nemesisName} health`);
-      playerSetupButton.textContent = `${state.playerCount} player${state.playerCount === 1 ? "" : "s"}`;
+      playerSetupButton.textContent = `${state.playerCount} Player${state.playerCount === 1 ? "" : "s"}`;
       updateSoundToggleButton();
 
       renderActionModal();
@@ -2549,11 +2543,7 @@
       }
     });
     bindHealthEditTrigger(cityHealthMainEl, "city");
-    bindHealthEditTrigger(cityHealthLabelEl, "city");
-    bindHealthEditTrigger(cityHealthEl, "city");
     bindHealthEditTrigger(nemesisHealthMainEl, "nemesis");
-    bindHealthEditTrigger(nemesisHealthLabelEl, "nemesis");
-    bindHealthEditTrigger(nemesisHealthEl, "nemesis");
     cityHealthMainEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
