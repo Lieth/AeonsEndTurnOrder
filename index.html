@@ -28,21 +28,26 @@
       <aside class="controls">
         <div class="controls-layout">
           <div class="controls-topbar">
-            <button id="player-setup-button" class="player-setup-trigger" aria-label="Start new game">New</button>
-            <div id="player-count-label" class="player-count-label">Players 4</div>
-            <div id="round-counter" class="round-counter">Round 1</div>
-            <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
-            <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">🌙</button>
-            <button id="history-button" class="setup-help setup-history" aria-label="Open game history" title="Game history">&#128214;</button>
-            <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
+            <div class="controls-actions-row">
+              <button id="player-setup-button" class="player-setup-trigger" aria-label="Start new game">New</button>
+              <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
+              <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">🌙</button>
+              <button id="history-button" class="setup-help setup-history" aria-label="Open game history" title="Game history">&#128214;</button>
+              <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
+            </div>
+            <div class="controls-status-row">
+              <div id="player-count-label" class="player-count-label">Players 4</div>
+              <div id="round-counter" class="round-counter">Round 1</div>
+            </div>
           </div>
 
           <div class="pile-column">
             <div class="drawpile-wrap">
               <button id="draw-pile" class="drawpile" aria-label="Draw next card">
                 <span class="drawpile-label">Draw<br>Pile</span>
-                <span class="drawpile-center-label">Cards Left</span>
-                <span id="draw-pile-count" class="drawpile-count">6</span>
+                <div class="drawpile-bottom-status">
+                  <span id="draw-pile-count" class="drawpile-count">6 cards left</span>
+                </div>
               </button>
               <button id="draw-pile-reveal" class="drawpile-reveal" aria-label="Reveal next card" title="Reveal next card">&#8645;</button>
               <button id="draw-pile-peek" class="drawpile-eye" aria-label="Peek top card" title="Peek top card">&#128065;</button>

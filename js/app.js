@@ -1247,7 +1247,7 @@ let shuffleAnimationTimeoutId = null;
         currentCardEl.hidden = true;
         currentCardEl.textContent = "";
       }
-      drawPileCountEl.textContent = String(state.drawPile.length);
+      drawPileCountEl.textContent = `${state.drawPile.length} card${state.drawPile.length === 1 ? "" : "s"} left`;
       discardPileCountEl.textContent = `${state.discardPile.length} card${state.discardPile.length === 1 ? "" : "s"}`;
       cityHealthEl.textContent = String(state.cityHealth);
       nemesisHealthEl.textContent = String(state.nemesisHealth);
