@@ -141,6 +141,26 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
+    .player-count-label {
+      border: 0;
+      border-radius: 0;
+      padding: 2px 0;
+      background: transparent;
+      color: #f0dfcf;
+      font: inherit;
+      font-size: 0.84rem;
+      line-height: 1;
+      letter-spacing: 0.03em;
+      text-transform: none;
+      min-width: 82px;
+      text-align: center;
+      box-shadow: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-variant-numeric: tabular-nums;
+    }
+
     .setup-help {
       width: 28px;
       min-width: 28px;
@@ -172,6 +192,11 @@
 
     .setup-sound.is-muted {
       color: #d12416;
+    }
+
+    .setup-history {
+      color: #f1e4d4;
+      font-size: 0.98rem;
     }
 
     .health-panel {
@@ -304,16 +329,22 @@
     }
 
     .round-counter {
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff4e9;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      font-size: 0.78rem;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #f0dfcf;
+      text-transform: none;
+      letter-spacing: 0.03em;
+      font-size: 0.84rem;
       text-align: center;
-      padding: 6px 12px;
+      padding: 2px 0;
       width: min(214px, 100%);
+      box-shadow: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
 
     .discarddeck {
@@ -952,6 +983,89 @@
       min-width: 1.8em;
       font-weight: 700;
       color: #ffd8c2;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-game {
+      background: rgba(255, 244, 233, 0.08);
+      border: 1px solid rgba(255, 244, 233, 0.14);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+      color: #fff4e9;
+    }
+
+    .history-game-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .history-game-title {
+      margin: 0;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #ffd8c2;
+    }
+
+    .history-meta {
+      margin: 0;
+      color: #f0dfcf;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .history-delete {
+      border: 1px solid rgba(255, 244, 233, 0.22);
+      background: rgba(255, 244, 233, 0.14);
+      color: #fff4e9;
+      border-radius: 999px;
+      min-width: 72px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: none;
+    }
+
+    .history-delete:disabled {
+      opacity: 0.6;
+    }
+
+    .history-round {
+      border-top: 1px solid rgba(255, 244, 233, 0.12);
+      padding-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .history-round-title {
+      margin: 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #ffd8c2;
+    }
+
+    .history-round-entries {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      display: grid;
+      gap: 4px;
+    }
+
+    .history-round-entries li {
+      color: #fff4e9;
+      font-size: 0.86rem;
+      line-height: 1.4;
     }
 
     .player-setup-list {

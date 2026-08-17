@@ -26,6 +26,11 @@ import {
   healthEditInputEl,
   healthEditModalEl,
   healthEditTitleEl,
+  historyButton,
+  historyClearButton,
+  historyModalCloseButton,
+  historyModalContentEl,
+  historyModalEl,
   helpButton,
   helpModalCloseButton,
   helpModalEl,
@@ -44,6 +49,7 @@ import {
   playerSetupListEl,
   playerSetupModalEl,
   playerSetupNemesisInput,
+  playerCountLabelEl,
   roundCounterEl,
   soundToggleButton,
   wakeLockButton
@@ -68,6 +74,286 @@ let shuffleAnimationTimeoutId = null;
       "Nemesis 2": new Audio("resources/Nemesis%202.mp3")
     };
     const preloadedCardImages = [];
+    const HISTORY_STORAGE_KEY = "drawphaser.gameHistory.v1";
+    const GAME_STATE_STORAGE_KEY = "drawphaser.currentGame.v1";
+    const MAX_HISTORY_GAMES = 24;
+    let historyStore = {
+      games: [],
+      activeGameId: null
+    };
+
+    function loadHistoryStore() {
+      try {
+        const rawValue = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (!rawValue) {
+          return;
+        }
+
+        const parsed = JSON.parse(rawValue);
+        if (!parsed || !Array.isArray(parsed.games)) {
+          return;
+        }
+
+        historyStore = {
+          games: parsed.games,
+          activeGameId: typeof parsed.activeGameId === "string" ? parsed.activeGameId : null
+        };
+      } catch (error) {
+        console.warn("History load failed:", error);
+      }
+    }
+
+    function saveHistoryStore() {
+      try {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyStore));
+      } catch (error) {
+        console.warn("History save failed:", error);
+      }
+    }
+
+    function buildGameStateSnapshot() {
+      return {
+        playerCount: state.playerCount,
+        playerNames: [...state.playerNames],
+        nemesisName: state.nemesisName,
+        drawPile: [...state.drawPile],
+        currentCard: state.currentCard,
+        discardPile: [...state.discardPile],
+        round: state.round,
+        soundMuted: state.soundMuted,
+        cityHealth: state.cityHealth,
+        nemesisHealth: state.nemesisHealth
+      };
+    }
+
+    function saveGameStateSnapshot() {
+      try {
+        localStorage.setItem(GAME_STATE_STORAGE_KEY, JSON.stringify(buildGameStateSnapshot()));
+      } catch (error) {
+        console.warn("Game snapshot save failed:", error);
+      }
+    }
+
+    function restoreGameStateSnapshot() {
+      try {
+        const rawValue = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+        if (!rawValue) {
+          return false;
+        }
+
+        const parsed = JSON.parse(rawValue);
+        if (!parsed || !Array.isArray(parsed.drawPile) || !Array.isArray(parsed.discardPile) || !Array.isArray(parsed.playerNames)) {
+          return false;
+        }
+
+        state.playerCount = Number.isInteger(parsed.playerCount) ? parsed.playerCount : parsed.playerNames.length;
+        state.playerNames = parsed.playerNames.slice(0, 4);
+        state.nemesisName = typeof parsed.nemesisName === "string" && parsed.nemesisName.length > 0 ? parsed.nemesisName : "Nemesis";
+        state.drawPile = [...parsed.drawPile];
+        state.currentCard = parsed.currentCard ?? null;
+        state.discardPile = [...parsed.discardPile];
+        state.round = Number.isInteger(parsed.round) && parsed.round > 0 ? parsed.round : 1;
+        state.soundMuted = Boolean(parsed.soundMuted);
+        state.cityHealth = Number.isInteger(parsed.cityHealth) && parsed.cityHealth >= 0 ? parsed.cityHealth : 30;
+        state.nemesisHealth = Number.isInteger(parsed.nemesisHealth) && parsed.nemesisHealth >= 0 ? parsed.nemesisHealth : 70;
+
+        state.pendingAction = null;
+        state.discardViewOpen = false;
+        state.helpViewOpen = false;
+        state.historyViewOpen = false;
+        state.playerSetupViewOpen = false;
+        state.playerSetupDraftNames = [];
+        state.playerSetupDraftNemesisName = state.nemesisName;
+        state.healthEditViewOpen = false;
+        state.healthEditTarget = null;
+        state.healthEditDraftValue = "0";
+
+        return true;
+      } catch (error) {
+        console.warn("Game snapshot restore failed:", error);
+        return false;
+      }
+    }
+
+    function getActiveHistoryGame() {
+      if (!historyStore.activeGameId) {
+        return null;
+      }
+
+      return historyStore.games.find((game) => game.id === historyStore.activeGameId) ?? null;
+    }
+
+    function getOrCreateRound(game, roundNumber) {
+      let round = game.rounds.find((entry) => entry.number === roundNumber);
+      if (!round) {
+        round = {
+          number: roundNumber,
+          entries: []
+        };
+        game.rounds.push(round);
+        game.rounds.sort((a, b) => a.number - b.number);
+      }
+
+      return round;
+    }
+
+    function ensureHistoryRound(roundNumber) {
+      const game = getActiveHistoryGame();
+      if (!game) {
+        return;
+      }
+
+      getOrCreateRound(game, roundNumber);
+      saveHistoryStore();
+    }
+
+    function endActiveHistoryGame(reason = "new-game") {
+      const game = getActiveHistoryGame();
+      if (!game || game.endedAt) {
+        return;
+      }
+
+      game.endedAt = new Date().toISOString();
+      game.endReason = reason;
+      saveHistoryStore();
+    }
+
+    function beginHistoryGame() {
+      endActiveHistoryGame("new-game");
+
+      const id = `game-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      const startedAt = new Date().toISOString();
+      const game = {
+        id,
+        startedAt,
+        endedAt: null,
+        endReason: null,
+        nemesisName: state.nemesisName,
+        playerNames: [...state.playerNames],
+        rounds: [{
+          number: 1,
+          entries: []
+        }]
+      };
+
+      historyStore.games.unshift(game);
+      historyStore.games = historyStore.games.slice(0, MAX_HISTORY_GAMES);
+      historyStore.activeGameId = id;
+      saveHistoryStore();
+    }
+
+    function deleteHistoryGame(gameId) {
+      if (!gameId || gameId === historyStore.activeGameId) {
+        return;
+      }
+
+      historyStore.games = historyStore.games.filter((game) => game.id !== gameId);
+      saveHistoryStore();
+    }
+
+    function addHistoryEntry(text, roundNumber = state.round) {
+      const game = getActiveHistoryGame();
+      if (!game) {
+        return;
+      }
+
+      const round = getOrCreateRound(game, roundNumber);
+      round.entries.push({
+        at: new Date().toISOString(),
+        text
+      });
+      saveHistoryStore();
+    }
+
+    function logHistoryDraw(card) {
+      addHistoryEntry(`- ${getCardDisplayName(card)}`);
+    }
+
+    function logHistoryAction(text) {
+      addHistoryEntry(`- Action: ${text}`);
+    }
+
+    function formatHistoryDate(isoValue) {
+      const date = new Date(isoValue);
+      if (Number.isNaN(date.getTime())) {
+        return "Unknown";
+      }
+
+      return date.toLocaleString();
+    }
+
+    function escapeHistory(value) {
+      return escapeHtml(value);
+    }
+
+    function renderHistoryModal() {
+      historyModalContentEl.innerHTML = "";
+
+      if (!state.historyViewOpen) {
+        historyModalEl.classList.remove("active");
+        return;
+      }
+
+      historyModalEl.classList.add("active");
+
+      if (historyStore.games.length === 0) {
+        historyModalContentEl.innerHTML = '<div class="empty-state">No games recorded yet.</div>';
+        return;
+      }
+
+      historyStore.games.forEach((game, gameIndex) => {
+        const card = document.createElement("section");
+        card.className = "history-game";
+
+        const gameTitle = `Game ${historyStore.games.length - gameIndex}`;
+        const started = formatHistoryDate(game.startedAt);
+        const players = (game.playerNames ?? []).join(", ");
+        const isCurrent = game.id === historyStore.activeGameId;
+        const deleteButtonMarkup = isCurrent
+          ? '<button class="history-delete" type="button" disabled title="Current game cannot be deleted">Current</button>'
+          : `<button class="history-delete" type="button" data-game-id="${escapeHistory(game.id)}" title="Delete this game from history">Delete</button>`;
+
+        card.innerHTML = `
+          <div class="history-game-head">
+            <h3 class="history-game-title">${escapeHistory(gameTitle)}${isCurrent ? " (Current)" : ""}</h3>
+            ${deleteButtonMarkup}
+          </div>
+          <p class="history-meta">Start: ${escapeHistory(started)}</p>
+          <p class="history-meta">Nemesis: ${escapeHistory(game.nemesisName ?? "Nemesis")}</p>
+          <p class="history-meta">Players: ${escapeHistory(players || "n/a")}</p>
+        `;
+
+        const deleteButton = card.querySelector(".history-delete[data-game-id]");
+        if (deleteButton) {
+          deleteButton.addEventListener("click", () => {
+            deleteHistoryGame(game.id);
+            render();
+          });
+        }
+
+        const rounds = Array.isArray(game.rounds) ? game.rounds : [];
+        rounds.sort((a, b) => a.number - b.number);
+
+        rounds.forEach((round) => {
+          const roundHost = document.createElement("div");
+          roundHost.className = "history-round";
+
+          const entries = Array.isArray(round.entries) ? round.entries : [];
+          const listMarkup = entries.length === 0
+            ? '<li>- No entries</li>'
+            : entries.map((entry) => `<li>${escapeHistory(entry.text)}</li>`).join("");
+
+          roundHost.innerHTML = `
+            <h4 class="history-round-title">Round ${round.number}</h4>
+            <ul class="history-round-entries">${listMarkup}</ul>
+          `;
+
+          card.appendChild(roundHost);
+        });
+
+        historyModalContentEl.appendChild(card);
+      });
+    }
 
     async function requestWakeLock() {
       if (!('wakeLock' in navigator)) {
@@ -162,6 +448,7 @@ let shuffleAnimationTimeoutId = null;
     function reshuffleFreshPile(advanceRound = false) {
       if (advanceRound) {
         state.round += 1;
+        ensureHistoryRound(state.round);
       }
 
       state.drawPile = shuffle(getBaseCardsForPlayers(state.playerCount));
@@ -212,6 +499,10 @@ let shuffleAnimationTimeoutId = null;
 
     function closeHelpModal() {
       state.helpViewOpen = false;
+    }
+
+    function closeHistoryModal() {
+      state.historyViewOpen = false;
     }
 
     function closePlayerSetupModal() {
@@ -391,6 +682,8 @@ let shuffleAnimationTimeoutId = null;
         state.currentCard = state.discardPile[0] ?? null;
       }
 
+      logHistoryAction(`Return Player -> ${getCardDisplayName(option.card)}`);
+
       resetPendingAction();
       render();
     }
@@ -400,6 +693,8 @@ let shuffleAnimationTimeoutId = null;
         for (let index = state.pendingAction.cards.length - 1; index >= 0; index -= 1) {
           state.drawPile.unshift(state.pendingAction.cards[index]);
         }
+
+        logHistoryAction("Reveal Two -> Cancel");
       }
 
       resetPendingAction();
@@ -420,6 +715,7 @@ let shuffleAnimationTimeoutId = null;
       state.drawPile = shuffle(state.drawPile);
       triggerShuffleAnimation();
       state.currentCard = state.discardPile[0] ?? null;
+      logHistoryAction("Return Nemesis -> Yes");
 
       resetPendingAction();
       render();
@@ -450,12 +746,14 @@ let shuffleAnimationTimeoutId = null;
 
         cardRow.querySelector('[data-action="topdeck"]').addEventListener("click", () => {
           state.drawPile.unshift(state.pendingAction.card);
+          logHistoryAction(`Reveal -> Keep On Top (${getCardDisplayName(state.pendingAction.card)})`);
           resetPendingAction();
           render();
         });
 
         cardRow.querySelector('[data-action="bottomdeck"]').addEventListener("click", () => {
           state.drawPile.push(state.pendingAction.card);
+          logHistoryAction(`Reveal -> Place At Bottom (${getCardDisplayName(state.pendingAction.card)})`);
           resetPendingAction();
           render();
         });
@@ -503,12 +801,14 @@ let shuffleAnimationTimeoutId = null;
 
           singleRow.querySelector('[data-order="single-top"]').addEventListener("click", () => {
             state.drawPile.unshift(firstCard);
+            logHistoryAction(`Reveal Two -> Return On Top (${getCardDisplayName(firstCard)})`);
             resetPendingAction();
             render();
           });
 
           singleRow.querySelector('[data-order="single-bottom"]').addEventListener("click", () => {
             state.drawPile.push(firstCard);
+            logHistoryAction(`Reveal Two -> Return At Bottom (${getCardDisplayName(firstCard)})`);
             resetPendingAction();
             render();
           });
@@ -621,6 +921,7 @@ let shuffleAnimationTimeoutId = null;
           for (let index = orderedCards.length - 1; index >= 0; index -= 1) {
             state.drawPile.unshift(orderedCards[index]);
           }
+          logHistoryAction(`Reveal Two -> Return Order (${orderedCards.map((card) => getCardDisplayName(card)).join(" > ")})`);
           resetPendingAction();
           render();
         });
@@ -651,6 +952,7 @@ let shuffleAnimationTimeoutId = null;
         `;
 
         actionsRow.querySelector('[data-action="cancel-return-player"]').addEventListener("click", () => {
+          logHistoryAction("Return Player -> Cancel");
           resetPendingAction();
           render();
         });
@@ -700,6 +1002,7 @@ let shuffleAnimationTimeoutId = null;
         });
 
         confirmationRow.querySelector('[data-action="cancel-return-nemesis"]').addEventListener("click", () => {
+          logHistoryAction("Return Nemesis -> No");
           resetPendingAction();
           render();
         });
@@ -831,11 +1134,13 @@ let shuffleAnimationTimeoutId = null;
 
         actionsRow.querySelector('[data-action="apply-reorder"]').addEventListener("click", () => {
           state.drawPile = [...state.pendingAction.cards];
+          logHistoryAction(`Reorder Draw Pile -> ${state.pendingAction.cards.map((card) => getCardDisplayName(card)).join(" > ")}`);
           resetPendingAction();
           render();
         });
 
         actionsRow.querySelector('[data-action="cancel-reorder"]').addEventListener("click", () => {
+          logHistoryAction("Reorder Draw Pile -> Cancel");
           resetPendingAction();
           render();
         });
@@ -915,7 +1220,7 @@ let shuffleAnimationTimeoutId = null;
     }
 
     function canOpenHealthEditor() {
-      return !(state.pendingAction || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen);
+      return !(state.pendingAction || state.discardViewOpen || state.helpViewOpen || state.historyViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen);
     }
 
     function bindHealthEditTrigger(element, target) {
@@ -949,7 +1254,7 @@ let shuffleAnimationTimeoutId = null;
       discardPileButton.classList.toggle("is-empty", state.discardPile.length === 0);
       const hasReturnablePlayers = getReturnablePlayerCards().length > 0;
       const returnableNemesisCount = getReturnableNemesisCount();
-      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen;
+      const isLocked = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.historyViewOpen || state.playerSetupViewOpen || state.healthEditViewOpen;
 
       drawPileButton.disabled = isLocked;
       drawPilePeekButton.disabled = isLocked;
@@ -959,22 +1264,27 @@ let shuffleAnimationTimeoutId = null;
       discardPileButton.disabled = isLocked;
       discardPileNemesisButton.disabled = isLocked || returnableNemesisCount === 0;
       discardPileReturnButton.disabled = isLocked || !hasReturnablePlayers;
-      playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
-      helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.playerSetupViewOpen;
+      playerSetupButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.historyViewOpen || state.playerSetupViewOpen;
+      helpButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.historyViewOpen || state.playerSetupViewOpen;
+      historyButton.disabled = Boolean(state.pendingAction) || state.discardViewOpen || state.helpViewOpen || state.playerSetupViewOpen;
       wakeLockButton.disabled = isLocked;
       wakeLockButton.textContent = wakeLockRequested ? '☀️' : '🌙';
+      playerCountLabelEl.textContent = `Players ${state.playerCount}`;
       roundCounterEl.textContent = `Round ${state.round}`;
       nemesisHealthLabelEl.textContent = state.nemesisName;
       cityHealthMainEl.setAttribute("aria-label", "Set city health");
       nemesisHealthMainEl.setAttribute("aria-label", `Set ${state.nemesisName} health`);
-      playerSetupButton.textContent = `${state.playerCount} Player${state.playerCount === 1 ? "" : "s"}`;
+      playerSetupButton.textContent = "New";
+      playerSetupButton.setAttribute("aria-label", "Start new game");
       updateSoundToggleButton();
 
       renderActionModal();
       renderDiscardModal();
       renderHelpModal();
+      renderHistoryModal();
       renderPlayerSetupModal();
       renderHealthEditModal();
+      saveGameStateSnapshot();
     }
 
     function drawNextCard() {
@@ -992,6 +1302,7 @@ let shuffleAnimationTimeoutId = null;
       state.discardPile.unshift(nextCard);
 
       state.currentCard = nextCard;
+      logHistoryDraw(nextCard);
       render();
     }
 
@@ -1009,6 +1320,7 @@ let shuffleAnimationTimeoutId = null;
         type: "peekTop",
         card: state.drawPile[0]
       };
+      logHistoryAction(`Peek -> ${getCardDisplayName(state.drawPile[0])}`);
       render();
     }
 
@@ -1027,6 +1339,7 @@ let shuffleAnimationTimeoutId = null;
         type: "peekOne",
         card: nextCard
       };
+      logHistoryAction(`Reveal -> ${getCardDisplayName(nextCard)}`);
       render();
     }
 
@@ -1052,6 +1365,7 @@ let shuffleAnimationTimeoutId = null;
         type: "peekTwo",
         cards: revealed
       };
+      logHistoryAction(`Reveal Two -> ${revealed.map((card) => getCardDisplayName(card)).join(" + ")}`);
       render();
     }
 
@@ -1072,7 +1386,9 @@ let shuffleAnimationTimeoutId = null;
       resetPendingAction();
       closeDiscardModal();
       closeHelpModal();
+      closeHistoryModal();
       closePlayerSetupModal();
+      beginHistoryGame();
       reshuffleFreshPile();
       render();
     }
@@ -1097,7 +1413,7 @@ let shuffleAnimationTimeoutId = null;
     playerSetupButton.addEventListener("click", (event) => {
       event.stopPropagation();
 
-      if (state.pendingAction || state.discardViewOpen || state.helpViewOpen) {
+      if (state.pendingAction || state.discardViewOpen || state.helpViewOpen || state.historyViewOpen) {
         return;
       }
 
@@ -1144,11 +1460,21 @@ let shuffleAnimationTimeoutId = null;
     helpButton.addEventListener("click", (event) => {
       event.stopPropagation();
 
-      if (state.pendingAction || state.discardViewOpen) {
+      if (state.pendingAction || state.discardViewOpen || state.historyViewOpen) {
         return;
       }
 
       state.helpViewOpen = true;
+      render();
+    });
+    historyButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      if (state.pendingAction || state.discardViewOpen || state.helpViewOpen) {
+        return;
+      }
+
+      state.historyViewOpen = true;
       render();
     });
     discardPileReturnButton.addEventListener("click", (event) => {
@@ -1202,6 +1528,25 @@ let shuffleAnimationTimeoutId = null;
     helpModalEl.addEventListener("click", (event) => {
       if (event.target === helpModalEl) {
         closeHelpModal();
+        render();
+      }
+    });
+    historyModalCloseButton.addEventListener("click", () => {
+      closeHistoryModal();
+      render();
+    });
+    historyClearButton.addEventListener("click", () => {
+      historyStore = {
+        games: [],
+        activeGameId: null
+      };
+      saveHistoryStore();
+      beginHistoryGame();
+      render();
+    });
+    historyModalEl.addEventListener("click", (event) => {
+      if (event.target === historyModalEl) {
+        closeHistoryModal();
         render();
       }
     });
@@ -1285,6 +1630,12 @@ let shuffleAnimationTimeoutId = null;
         return;
       }
 
+      if (state.historyViewOpen) {
+        closeHistoryModal();
+        render();
+        return;
+      }
+
       if (state.playerSetupViewOpen) {
         closePlayerSetupModal();
         render();
@@ -1297,6 +1648,17 @@ let shuffleAnimationTimeoutId = null;
       }
     });
 
+    loadHistoryStore();
+    const didRestoreGame = restoreGameStateSnapshot();
+    if (didRestoreGame) {
+      if (!getActiveHistoryGame()) {
+        beginHistoryGame();
+      }
+      ensureHistoryRound(state.round);
+      logHistoryAction("Session restored after reload");
+    } else {
+      beginHistoryGame();
+      reshuffleFreshPile();
+    }
     preloadCardImages();
-    reshuffleFreshPile();
     render();

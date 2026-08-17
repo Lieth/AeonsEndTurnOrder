@@ -39,6 +39,7 @@ export const state = {
   discardPile: [],
   discardViewOpen: false,
   helpViewOpen: false,
+  historyViewOpen: false,
   playerSetupViewOpen: false,
   playerSetupDraftNames: [],
   playerSetupDraftNemesisName: "Nemesis",

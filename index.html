@@ -28,10 +28,12 @@
       <aside class="controls">
         <div class="controls-layout">
           <div class="controls-topbar">
-            <button id="player-setup-button" class="player-setup-trigger" aria-label="Configure players">4 Players</button>
+            <button id="player-setup-button" class="player-setup-trigger" aria-label="Start new game">New</button>
+            <div id="player-count-label" class="player-count-label">Players 4</div>
             <div id="round-counter" class="round-counter">Round 1</div>
             <button id="sound-toggle" class="setup-help setup-sound" aria-label="Mute sounds" title="Mute sounds">&#128266;</button>
             <button id="wake-lock-button" class="setup-help" aria-label="Keep screen awake" title="Keep screen awake">🌙</button>
+            <button id="history-button" class="setup-help setup-history" aria-label="Open game history" title="Game history">&#128214;</button>
             <button id="help-button" class="setup-help" aria-label="Open help" title="How to use">?</button>
           </div>
 
@@ -119,6 +121,7 @@
       <ul class="help-list">
         <li><span class="help-icon">Players</span> Open setup to add/remove 1-4 players, set names, and start a fresh game.</li>
         <li><span class="help-icon">&#128266;/&#128263;</span> Toggle sounds on/off.</li>
+        <li><span class="help-icon">&#128214;</span> Open game history (saved in this browser only).</li>
         <li><span class="help-icon">?</span> Open this help popup.</li>
         <li><span class="help-icon">Draw Pile</span> Click on pile to draw next card.</li>
         <li><span class="help-icon">&#8645;</span> Reveal next card and choose to place it on top or bottom of the drawpile.</li>
@@ -133,6 +136,18 @@
       </ul>
       <div class="inline-actions" style="margin-top: 16px;">
         <button id="help-modal-close" class="secondary">Close</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="history-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <section class="modal">
+      <h2 id="history-modal-title">Game History</h2>
+      <p class="modal-copy">Stored locally in this browser only.</p>
+      <div id="history-modal-content" class="history-list"></div>
+      <div class="inline-actions" style="margin-top: 16px;">
+        <button id="history-clear" class="secondary">Clear History</button>
+        <button id="history-modal-close" class="secondary">Close</button>
       </div>
     </section>
   </div>
