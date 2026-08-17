@@ -427,7 +427,7 @@
       border-radius: 18px;
       background:
         linear-gradient(180deg, rgba(18, 18, 18, 0.18), rgba(18, 18, 18, 0.14)),
-        url("../resources/backside.png") center / cover no-repeat;
+        url("../resources/Backside.png") center / cover no-repeat;
       box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14), 0 14px 24px rgba(51, 27, 17, 0.22);
       color: #fff;
       font: inherit;
